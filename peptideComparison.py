@@ -524,7 +524,7 @@ def generate_test_comparison_results(ref_dict, test_dict):
 # ----------------------------------------------- MAIN
 
 if __name__ == '__main__':
-    result_file = pd.ExcelWriter(RESULT_FILE_NAME)
+    result_file = pd.ExcelWriter("resultFiles/" + RESULT_FILE_NAME)
 
     print("Reading Ref")
     ref_raw = pd.read_csv("inputFiles/" + REF_FILE_NAME, index_col=False, usecols={"Start", "Peptide"})

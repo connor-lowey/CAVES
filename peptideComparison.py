@@ -1,8 +1,12 @@
 import pandas as pd
-import openpyxl
 
 from pip._vendor.distlib.compat import raw_input
 
+import sys
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    print('running in a PyInstaller bundle')
+else:
+    print('running in a normal Python process')
 
 # ----------------------------------------------- CONSTANTS
 
@@ -522,9 +526,13 @@ def generate_test_comparison_results(ref_dict, test_dict):
 if __name__ == '__main__':
     result_file = pd.ExcelWriter(RESULT_FILE_NAME)
 
+    print("Reading Ref")
     ref_raw = pd.read_csv("inputFiles/" + REF_FILE_NAME, index_col=False, usecols={"Start", "Peptide"})
+    print("Reading Test")
     test_raw = pd.read_csv("inputFiles/" + TEST_FILE_NAME, index_col=False, usecols={"Start", "Peptide"})
-    main_raw = pd.read_csv("inputFiles/" + MAIN_FILE_NAME, index_col=False, skiprows=1, usecols={"Starting Position", "Description"})
+    print("Reading main")
+    main_raw = pd.read_csv("inputFiles/" + MAIN_FILE_NAME, index_col=False, skiprows=1,
+                           usecols={"Starting Position", "Description"})
 
     main_dictionary = create_main_comparison_dict(main_raw.to_dict('split'))
 
@@ -574,6 +582,5 @@ if __name__ == '__main__':
 
     result_file.save()
 
-    print("Bye")
-
+    print("Done")
     raw_input()

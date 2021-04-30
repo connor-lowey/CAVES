@@ -53,21 +53,21 @@ class MainApplication:
         self.label_gen_inf = tk.Label(self.frame_gen_inf,
                                       text='Input File Names',
                                       bd='3', fg='blue', font='Helvetica 9 bold')
-        self.label_operator = tk.Label(self.frame_gen_inf, text='Name',
+        self.label_ref = tk.Label(self.frame_gen_inf, text='Ref',
                                        bd='3')
-        self.label_vessel = tk.Label(self.frame_gen_inf, text='ID no.', bd='3')
-        self.entry_operator = tk.Entry(self.frame_gen_inf, bd='3',
+        self.label_test = tk.Label(self.frame_gen_inf, text='Test', bd='3')
+        self.entry_ref = tk.Entry(self.frame_gen_inf, bd='3',
                                        justify="center")
-        self.entry_vessel = tk.Entry(self.frame_gen_inf, bd='3',
+        self.entry_test = tk.Entry(self.frame_gen_inf, bd='3',
                                      justify="center")
 
         # place used to place the widgets in the frame
         self.label_gen_inf.place(relx=0.009, rely=0.009, relheight=0.25)
-        self.label_operator.place(relx=0.08, rely=0.45, relheight=0.25)
-        self.entry_operator.place(relx=0.22, rely=0.45, relwidth=0.2,
+        self.label_ref.place(relx=0.08, rely=0.45, relheight=0.25)
+        self.entry_ref.place(relx=0.22, rely=0.45, relwidth=0.2,
                                   relheight=0.3)
-        self.label_vessel.place(relx=0.55, rely=0.45, relheight=0.25)
-        self.entry_vessel.place(relx=0.66, rely=0.45, relwidth=0.25,
+        self.label_test.place(relx=0.55, rely=0.45, relheight=0.25)
+        self.entry_test.place(relx=0.66, rely=0.45, relwidth=0.25,
                                 relheight=0.3)
 
         ############################################################################################
@@ -774,6 +774,6 @@ def generate_test_comparison_results(ref_dict, test_dict):
 if __name__ == '__main__':
 
     window = tk.Tk()
-    window.title("Example for Tkinter")
-    c = MainApplication(window)
-    window.mainloop()  # keeps the application open
+    window.title("Peptide Comparison")
+    app = MainApplication(window)
+    window.mainloop()

@@ -1,7 +1,6 @@
 import pandas as pd
 import tkinter as tk
-
-from pip._vendor.distlib.compat import raw_input
+from tkinter import filedialog
 
 import sys
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
@@ -9,13 +8,13 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
 else:
     print('running in a normal Python process')
 
-# ----------------------------------------------- CONSTANTS
+# ----------------------------------------------- GLOBAL VARIABLES
 
-MAIN_FILE_NAME = 'main.csv'
-TEST_FILE_NAME = 'Bcell_test.csv'
-REF_FILE_NAME = 'Bcell_ref.csv'
+MAIN_FILE_NAME = "main"
+TEST_FILE_NAME = "test"
+REF_FILE_NAME = "ref"
 
-RESULT_FILE_NAME = 'full_test_result.xlsx'
+RESULT_FILE_NAME = 'results'
 
 INSERTIONS = []
 DELETIONS = [69, 70, 144]
@@ -37,150 +36,54 @@ class MainApplication:
         # to make a frame
         self.frame = tk.Frame(master, bg='white')
 
-        # to place a menu item in the window
-        self.menu = tk.Menu(master)
-        master.config(menu=self.menu)
-
-        # all the commands for the submenu Help
-        self.subMenu_help = tk.Menu(self.menu)
-        self.menu.add_cascade(label="Help", menu=self.subMenu_help)
-        self.subMenu_help.add_command(label="Help", command=self.nothing)
-
         ############################################################################################
-        # Frame general information
+        # Frame Input
         # this frame is placed in the original frame
-        self.frame_gen_inf = tk.Frame(self.frame, bd='10', padx=3, pady=3)
-        self.label_gen_inf = tk.Label(self.frame_gen_inf,
-                                      text='Input File Names',
-                                      bd='3', fg='blue', font='Helvetica 9 bold')
-        self.label_ref = tk.Label(self.frame_gen_inf, text='Ref',
-                                       bd='3')
-        self.label_test = tk.Label(self.frame_gen_inf, text='Test', bd='3')
-        self.entry_ref = tk.Entry(self.frame_gen_inf, bd='3',
-                                       justify="center")
-        self.entry_test = tk.Entry(self.frame_gen_inf, bd='3',
-                                     justify="center")
+        self.frame_input = tk.Frame(self.frame, bd='10', padx=3, pady=3)
+        self.label_input_files = tk.Label(self.frame_input, text='Input File Paths', bd='3', fg='blue',
+                                          font='Helvetica 9 bold')
+        self.label_ref = tk.Label(self.frame_input, text='Ref', bd='3')
+        self.label_test = tk.Label(self.frame_input, text='Test', bd='3')
+        self.label_main = tk.Label(self.frame_input, text='Main', bd='3')
+
+        self.entry_ref = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.entry_test = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.entry_main = tk.Entry(self.frame_input, bd='3', justify="center")
+
+        self.button_ref = tk.Button(self.frame_input, text='Browse', command=self.browse_ref)
+        self.button_test = tk.Button(self.frame_input, text='Browse', command=self.browse_test)
+        self.button_main = tk.Button(self.frame_input, text='Browse', command=self.browse_main)
+
+        self.label_result_file_title = tk.Label(self.frame_input, text='Result File Name', bd='3', fg='blue',
+                                          font='Helvetica 9 bold')
+
+        self.entry_result_file = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.label_result_file_extension = tk.Label(self.frame_input, text='.xlsx', bd='3')
 
         # place used to place the widgets in the frame
-        self.label_gen_inf.place(relx=0.009, rely=0.009, relheight=0.25)
-        self.label_ref.place(relx=0.08, rely=0.45, relheight=0.25)
-        self.entry_ref.place(relx=0.22, rely=0.45, relwidth=0.2,
-                                  relheight=0.3)
-        self.label_test.place(relx=0.55, rely=0.45, relheight=0.25)
-        self.entry_test.place(relx=0.66, rely=0.45, relwidth=0.25,
-                                relheight=0.3)
+        self.label_input_files.place(relx=0.009, rely=0.005, relheight=0.05)
 
-        ############################################################################################
-        # frame test Selection
-        self.frame_test = tk.Frame(self.frame, bd='10', padx=3, pady=3)
-        self.label_test = tk.Label(self.frame_test, text='Test Selection',
-                                   bd='3', fg='blue', font='Helvetica 9 bold')
+        self.label_ref.place(relx=0.05, rely=0.08, relheight=0.05)
+        self.entry_ref.place(relx=0.20, rely=0.08, relwidth=0.55, relheight=0.05)
+        self.button_ref.place(relx=0.80, rely=0.08, relheight=0.05)
 
-        # variables for the checkboxes
-        self.check_but_1 = tk.IntVar()
-        self.check_but_2 = tk.IntVar()
-        self.check_but_3 = tk.IntVar()
-        self.check_but_4 = tk.IntVar()
-        self.check_but_5 = tk.IntVar()
+        self.label_test.place(relx=0.05, rely=0.16, relheight=0.05)
+        self.entry_test.place(relx=0.20, rely=0.16, relwidth=0.55, relheight=0.05)
+        self.button_test.place(relx=0.80, rely=0.16, relheight=0.05)
 
-        # checkboxes, the results can be read usig the check_but var,get funct
-        self.check_button_1 = tk.Checkbutton(self.frame_test,
-                                             text="1", variable=self.check_but_1, onvalue=1, offvalue=0)
-        self.check_button_2 = tk.Checkbutton(self.frame_test,
-                                             text="2", variable=self.check_but_2, onvalue=1, offvalue=0)
-        self.check_button_3 = tk.Checkbutton(self.frame_test,
-                                             text="3", variable=self.check_but_3, onvalue=1, offvalue=0)
-        self.check_button_4 = tk.Checkbutton(self.frame_test,
-                                             text="4", variable=self.check_but_4, onvalue=1, offvalue=0)
-        self.check_button_5 = tk.Checkbutton(self.frame_test,
-                                             text="5", variable=self.check_but_5, onvalue=1, offvalue=0)
+        self.label_main.place(relx=0.05, rely=0.24, relheight=0.05)
+        self.entry_main.place(relx=0.20, rely=0.24, relwidth=0.55, relheight=0.05)
+        self.button_main.place(relx=0.80, rely=0.24, relheight=0.05)
 
-        # placing all the checkboxes
-        self.label_test.place(relx=0.009, rely=0.009, relheight=0.25)
-        self.check_button_1.place(relx=0.009, rely=0.45,
-                                  relheight=0.25, relwidth=0.15)
-        self.check_button_2.place(relx=0.20, rely=0.45,
-                                  relheight=0.25, relwidth=0.15)
-        self.check_button_3.place(relx=0.40, rely=0.45,
-                                  relheight=0.25, relwidth=0.15)
-        self.check_button_4.place(relx=0.60, rely=0.45,
-                                  relheight=0.25, relwidth=0.15)
-        self.check_button_5.place(relx=0.80, rely=0.45,
-                                  relheight=0.25, relwidth=0.15)
-
-        ##########################################################################################
-        # frame for the Results
-        self.frame_results = tk.Frame(self.frame, bd='10')
-        # self.canvas_result = ResizingCanvas(self.frame_results)
-        self.canvas.place(relx=0, rely=0, relheight=1, relwidth=1)
-        self.label_results = tk.Label(self.frame_results, text='Result',
-                                      bd='1', fg='blue', font='Helvetica 9 bold')
-
-        # Labels for different options
-        self.label_1 = tk.Label(self.frame_results, text='1')
-        self.label_2 = tk.Label(self.frame_results, text='2')
-        self.label_3 = tk.Label(self.frame_results, text='3')
-        self.label_4 = tk.Label(self.frame_results, text='4')
-        self.label_5 = tk.Label(self.frame_results, text='5')
-
-        # placing all the labels
-        self.label_results.place(relx=0.025, rely=0.009, relheight=0.25)
-        self.label_1.place(relx=0.009, rely=0.30, relheight=0.25, relwidth=0.15)
-        self.label_2.place(relx=0.20, rely=0.30, relheight=0.25, relwidth=0.15)
-        self.label_3.place(relx=0.40, rely=0.30, relheight=0.25, relwidth=0.15)
-        self.label_4.place(relx=0.60, rely=0.30, relheight=0.25, relwidth=0.15)
-        self.label_5.place(relx=0.80, rely=0.30, relheight=0.25, relwidth=0.15)
-
-        # creating the circles to display the result
-        rad_x = 5.5
-        rad_y = 22
-        self.result_1 = self.canvas.create_oval(22 - rad_x,
-                                                       190 - rad_y, 22 + rad_x, 190 + rad_y, fill="green",
-                                                       outline="#DDD", width=2)
-        self.result_2 = self.canvas.create_oval(95 - rad_x,
-                                                       190 - rad_y, 95 + rad_x, 190 + rad_y, fill="green",
-                                                       outline="#DDD", width=2)
-        self.result_3 = self.canvas.create_oval(172 - rad_x,
-                                                       190 - rad_y, 172 + rad_x, 190 + rad_y, fill="red",
-                                                       outline="#DDD", width=2)
-        self.result_4 = self.canvas.create_oval(248 - rad_x,
-                                                       190 - rad_y, 248 + rad_x, 190 + rad_y, fill="green",
-                                                       outline="#DDD", width=2)
-        self.result_5 = self.canvas.create_oval(325 - rad_x,
-                                                       190 - rad_y, 325 + rad_x, 190 + rad_y, fill="gray",
-                                                       outline="#DDD", width=2)
-
-        # Text for the result LED's
-        self.label_result_1 = self.canvas.create_text((45, 190),
-                                                             text="")
-        self.label_result_2 = self.canvas.create_text((118, 190),
-                                                             text="OK")
-        self.label_result_3 = self.canvas.create_text((195, 190),
-                                                             text="OK")
-        self.label_result_4 = self.canvas.create_text((271, 190),
-                                                             text="OK")
-        self.label_result_5 = self.canvas.create_text((348, 190),
-                                                             text="OK")
-
-        ###########################################################################################
-        # frame for the Status
-        self.frame_status = tk.Frame(self.frame, bd='10', padx=3, pady=3)
-        self.label_status = tk.Label(self.frame_status, text='Status', bd='3',
-                                     fg='blue', font='Helvetica 9 bold')
-
-        # self.edit_space = tkst.ScrolledText(master=self.frame_status,
-        #                                     wrap='word', bg='white')
-        # self.edit_space.place(relx=0, rely=0.13, relheight=0.9, relwidth=1)
-
-        self.label_status.place(relx=0.009, rely=0, relheight=0.11)
+        self.label_result_file_title.place(relx=0.009, rely=0.32, relheight=0.05)
+        self.entry_result_file.place(relx=0.20, rely=0.395, relwidth=0.55, relheight=0.05)
+        self.label_result_file_extension.place(relx=0.75, rely=0.395, relheight=0.05)
 
         ############################################################################################
         # placing the buttons below
         self.frame_button = tk.Frame(self.frame, bd='3', padx=3, pady=3)
-        self.button_start = tk.Button(self.frame_button, text='Compare',
-                                      command=self.start_clicked)
-        self.button_cancel = tk.Button(self.frame_button, text='Cancel',
-                                       command=master.destroy)
+        self.button_start = tk.Button(self.frame_button, text='Compare', command=self.start_clicked)
+        self.button_cancel = tk.Button(self.frame_button, text='Cancel', command=master.destroy)
 
         self.button_cancel.place(relx=0.6, rely=0.22, relheight=0.8, relwidth=0.18)
         self.button_start.place(relx=0.8, rely=0.22, relheight=0.8, relwidth=0.18)
@@ -188,16 +91,8 @@ class MainApplication:
         ###############################################################################################
         # all the frames are placed in their respective positions
 
-        self.frame_gen_inf.place(relx=0.005, rely=0.005, relwidth=0.99,
-                                 relheight=0.18)
-        self.frame_test.place(relx=0.005, rely=0.190, relwidth=0.99,
-                              relheight=0.18)
-        self.frame_results.place(relx=0.005, rely=0.375, relwidth=0.99,
-                                 relheight=0.18)
-        self.frame_status.place(relx=0.005, rely=0.560, relwidth=0.99,
-                                relheight=0.35)
-        self.frame_button.place(relx=0.005, rely=0.915, relwidth=0.99,
-                                relheight=0.08)
+        self.frame_input.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.906)
+        self.frame_button.place(relx=0.005, rely=0.915, relwidth=0.99, relheight=0.08)
 
         self.frame.place(relx=0.02, rely=0.02, relwidth=0.96, relheight=0.96)
         self.canvas.pack()
@@ -205,23 +100,36 @@ class MainApplication:
 
     # This function is called when the start button is clicked
     def start_clicked(self):
-        print("Start is clicked")
-        print('the Operator is: ', self.entry_operator.get())
-        print("the vessel Number is: ", self.entry_vessel.get())
-        if self.check_but_1.get() == 1:
-            print("Testing for ESM 1")
-        if self.check_but_2.get() == 1:
-            print("Testing for ESM 2")
+        print("Compare Start")
 
-        result_file = pd.ExcelWriter("resultFiles/" + RESULT_FILE_NAME)
+        # print(self.entry_ref.get())
+        # print(self.entry_test.get())
+        # print(self.entry_main.get())
+
+        global REF_FILE_NAME
+        REF_FILE_NAME = (self.entry_ref.get()).strip().split("/").pop()
+
+        global TEST_FILE_NAME
+        TEST_FILE_NAME = (self.entry_test.get()).strip().split("/").pop()
+
+        global MAIN_FILE_NAME
+        MAIN_FILE_NAME = (self.entry_main.get()).strip().split("/").pop()
+
+        global RESULT_FILE_NAME
+        RESULT_FILE_NAME = self.entry_result_file.get()
+
+        # print(REF_FILE_NAME)
+        # print(TEST_FILE_NAME)
+        # print(MAIN_FILE_NAME)
+        # print(RESULT_FILE_NAME)
 
         print("Reading Ref")
-        ref_raw = pd.read_csv("inputFiles/" + REF_FILE_NAME, index_col=False, usecols={"Start", "Peptide"})
+        ref_raw = pd.read_csv(self.entry_ref.get(), index_col=False, usecols={"Start", "Peptide"})
         print("Reading Test")
-        test_raw = pd.read_csv("inputFiles/" + TEST_FILE_NAME, index_col=False, usecols={"Start", "Peptide"})
+        test_raw = pd.read_csv(self.entry_test.get(), index_col=False, usecols={"Start", "Peptide"})
         print("Reading main")
-        main_raw = pd.read_csv("inputFiles/" + MAIN_FILE_NAME, index_col=False, skiprows=1,
-                               usecols={"Starting Position", "Description"})
+        main_raw = pd.read_csv(self.entry_main.get(), index_col=False, skiprows=1,
+                               usecols={"Description", "Starting Position"})
 
         main_dictionary = create_main_comparison_dict(main_raw.to_dict('split'))
 
@@ -253,6 +161,8 @@ class MainApplication:
         L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
         L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
 
+        result_file = pd.ExcelWriter(RESULT_FILE_NAME + ".xlsx")  # may need to validate this string
+
         L1m_df.to_excel(result_file, sheet_name="L1M", index=False)
         L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
         L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
@@ -272,7 +182,25 @@ class MainApplication:
         result_file.save()
         print("Compared")
 
-    # This function is just a test function assigned to buttons which don't have a specifc function
+    def browse_ref(self):
+        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("CSV files", "*.csv*"),
+                                                                                                ("all files", "*.*")))
+        self.entry_ref.delete(0, tk.END)
+        self.entry_ref.insert(0, filename)
+
+    def browse_test(self):
+        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("CSV files", "*.csv*"),
+                                                                                                ("all files", "*.*")))
+        self.entry_test.delete(0, tk.END)
+        self.entry_test.insert(0, filename)
+
+    def browse_main(self):
+        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("CSV files", "*.csv*"),
+                                                                                                ("all files", "*.*")))
+        self.entry_main.delete(0, tk.END)
+        self.entry_main.insert(0, filename)
+
+    # This function is just a test function assigned to buttons which don't have a specific function
     def nothing(self):
         print("I am working perfectly")
 
@@ -338,6 +266,7 @@ def create_main_comparison_dict(main_dict_raw):
     main_list = list(main_dict_raw['data'])
     result_dict = {}
     for item in main_list:
+        # print(item[0] + " - " + str(item[1]))
         split = item[0].split(" ")
         suffix = ""
         length = len(split[0])
@@ -357,6 +286,7 @@ def create_test_comparison_dict(sample_dict_raw, test_file_name):
     result_dict = {}
 
     for item in sample_list:
+        # print(str(item[0]) + " - " + str(item[1]))
         result_dict[item[0]] = PeptideObject(test_file_name, item[1], item[0], item[0]+len(item[1])-1, len(item[1]), "")
     return result_dict
 
@@ -577,8 +507,6 @@ def calculate_test_comparison_parameters(ref_peptide, test_peptide):
 
 
 def compare_to_test_string(ref_peptide, test_peptide):
-    # update this
-
     results = []
     novel_positions = {}
     matched_positions = {}

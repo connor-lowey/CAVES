@@ -1,28 +1,32 @@
 import pandas as pd
 import tkinter as tk
 from tkinter import filedialog
-
+from os import path
+from enum import Enum
 import sys
+
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     print('running in a PyInstaller bundle')
 else:
     print('running in a normal Python process')
 
+
 # ----------------------------------------------- GLOBAL VARIABLES
 
-MAIN_FILE_NAME = "main"
-TEST_FILE_NAME = "test"
-REF_FILE_NAME = "ref"
 
-RESULT_FILE_NAME = 'results'
+REF_FILE_NAME = ""
+TEST_FILE_NAME = ""
+MAIN_FILE_NAME = ""
 
 INSERTIONS = []
 DELETIONS = [69, 70, 144]
 
+PEP_COLUMNS = ["peptide", "Peptide"]
+START_COLUMNS = ["start", "Start"]
 
-REF_PEPTIDE_MAX_LENGTH = 9
-TEST_PEPTIDE_MAX_LENGTH = 9
-MAIN_PEPTIDE_MAX_LENGTH = 36
+REF_PEPTIDE_MAX_LENGTH = 50  # 9
+TEST_PEPTIDE_MAX_LENGTH = 50  # 9
+MAIN_PEPTIDE_MAX_LENGTH = 50  # 36
 
 
 # ----------------------------------------------- CLASSES
@@ -102,47 +106,30 @@ class MainApplication:
     def start_clicked(self):
         print("Compare Start")
 
-        # print(self.entry_ref.get())
-        # print(self.entry_test.get())
-        # print(self.entry_main.get())
-
-        global REF_FILE_NAME
-        REF_FILE_NAME = (self.entry_ref.get()).strip().split("/").pop()
-
-        global TEST_FILE_NAME
-        TEST_FILE_NAME = (self.entry_test.get()).strip().split("/").pop()
-
-        global MAIN_FILE_NAME
-        MAIN_FILE_NAME = (self.entry_main.get()).strip().split("/").pop()
-
-        global RESULT_FILE_NAME
-        RESULT_FILE_NAME = self.entry_result_file.get()
-
-        # print(REF_FILE_NAME)
-        # print(TEST_FILE_NAME)
-        # print(MAIN_FILE_NAME)
-        # print(RESULT_FILE_NAME)
-
         print("Reading Ref")
-        ref_raw = pd.read_csv(self.entry_ref.get(), index_col=False, usecols={"Start", "Peptide"})
+        ref_raw = init_ref_raw(self.entry_ref.get().strip())
+        if ref_raw is None:
+            print("Unable to read ref file")
+            return
         print("Reading Test")
-        test_raw = pd.read_csv(self.entry_test.get(), index_col=False, usecols={"Start", "Peptide"})
+        test_raw = init_test_raw(self.entry_test.get().strip())
+        if test_raw is None:
+            print("Unable to read test file")
+            return
         print("Reading main")
-        main_raw = pd.read_csv(self.entry_main.get(), index_col=False, skiprows=1,
-                               usecols={"Description", "Starting Position"})
+        main_raw = init_main_raw(self.entry_main.get().strip())
+        if main_raw is None:
+            print("Unable to read main file")
+            return
 
         main_dictionary = create_main_comparison_dict(main_raw.to_dict('split'))
-
         ref_dictionary = create_test_comparison_dict(ref_raw.to_dict('split'), REF_FILE_NAME)
-
         test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
 
         generate_test_comparison_results(ref_dictionary, test_dictionary)
 
         generate_main_comparison_results(L1_matched_dict, main_dictionary, "L1m")
-
         generate_main_comparison_results(L1_partial_dict, main_dictionary, "L1p")
-
         generate_main_comparison_results(L1_novel_dict, main_dictionary, "L1n")
 
         L1m_df = create_match_df(L1_matched)
@@ -161,7 +148,7 @@ class MainApplication:
         L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
         L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
 
-        result_file = pd.ExcelWriter(RESULT_FILE_NAME + ".xlsx")  # may need to validate this string
+        result_file = pd.ExcelWriter(self.entry_result_file.get() + ".xlsx")  # Validate this, maybe regex
 
         L1m_df.to_excel(result_file, sheet_name="L1M", index=False)
         L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
@@ -260,6 +247,67 @@ L1_matched_dict = {}
 
 
 # ----------------------------------------------- FUNCTIONS
+
+
+def init_ref_raw(file_path):
+    if not path.exists(file_path):
+        print("Unable to find ref file: " + file_path)
+        return None
+
+    global REF_FILE_NAME
+    REF_FILE_NAME = file_path.strip().split("/").pop()  # gives last item in list which is file
+
+    ref_raw = None
+    for pep_col in PEP_COLUMNS:
+        for start_col in START_COLUMNS:
+            try:
+                ref_raw = pd.read_csv(file_path, index_col=False, usecols={start_col, pep_col})
+                break
+            except ValueError:
+                ref_raw = None
+        else:
+            continue
+        break
+
+    return ref_raw
+
+
+def init_test_raw(file_path):
+    if not path.exists(file_path):
+        print("Unable to find test file from path: " + file_path)
+        return None
+
+    global TEST_FILE_NAME
+    TEST_FILE_NAME = file_path.strip().split("/").pop()  # gives last item in list which is file
+
+    test_raw = None
+    for pep_col in PEP_COLUMNS:
+        for start_col in START_COLUMNS:
+            try:
+                test_raw = pd.read_csv(file_path, index_col=False, usecols={start_col, pep_col})
+                break
+            except ValueError:
+                test_raw = None
+        else:
+            continue
+        break
+
+    return test_raw
+
+
+def init_main_raw(file_path):
+    if not path.exists(file_path):
+        print("Unable to find main file: " + file_path)
+        return None
+
+    global MAIN_FILE_NAME
+    MAIN_FILE_NAME = file_path.strip().split("/").pop()  # gives last item in list which is file
+
+    try:
+        main_raw = pd.read_csv(file_path, index_col=False, skiprows=1, usecols={"Description", "Starting Position"})
+        return main_raw
+    except ValueError:
+        return None
 
 
 def create_main_comparison_dict(main_dict_raw):
@@ -698,6 +746,7 @@ def generate_test_comparison_results(ref_dict, test_dict):
 
 
 # ----------------------------------------------- MAIN
+
 
 if __name__ == '__main__':
 

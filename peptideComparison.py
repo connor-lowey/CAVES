@@ -105,6 +105,7 @@ class MainApplication:
     # This function is called when the start button is clicked
     def start_clicked(self):
         print("Compare Start")
+        init_objects()
 
         print("Reading Ref")
         ref_raw = init_ref_raw(self.entry_ref.get().strip())
@@ -167,6 +168,7 @@ class MainApplication:
         L1n_L2n_df.to_excel(result_file, sheet_name="L1N_L2N", index=False)
 
         result_file.save()
+
         print("Compared")
 
     def browse_ref(self):
@@ -247,6 +249,43 @@ L1_matched_dict = {}
 
 
 # ----------------------------------------------- FUNCTIONS
+
+
+def init_objects():
+    global L1_novel
+    L1_novel = ResultSheetObject()
+    global L1_partial
+    L1_partial = ResultSheetObject()
+    global L1_matched
+    L1_matched = ResultSheetObject()
+
+    global L1_novel_L2_novel
+    L1_novel_L2_novel = ResultSheetObject()
+    global L1_novel_L2_partial
+    L1_novel_L2_partial = ResultSheetObject()
+    global L1_novel_L2_matched
+    L1_novel_L2_matched = ResultSheetObject()
+
+    global L1_partial_L2_novel
+    L1_partial_L2_novel = ResultSheetObject()
+    global L1_partial_L2_partial
+    L1_partial_L2_partial = ResultSheetObject()
+    global L1_partial_L2_matched
+    L1_partial_L2_matched = ResultSheetObject()
+
+    global L1_matched_L2_novel
+    L1_matched_L2_novel = ResultSheetObject()
+    global L1_matched_L2_partial
+    L1_matched_L2_partial = ResultSheetObject()
+    global L1_matched_L2_matched
+    L1_matched_L2_matched = ResultSheetObject()
+
+    global L1_novel_dict
+    L1_novel_dict = {}
+    global L1_partial_dict
+    L1_partial_dict = {}
+    global L1_matched_dict
+    L1_matched_dict = {}
 
 
 def init_ref_raw(file_path):

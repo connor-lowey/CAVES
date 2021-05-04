@@ -352,6 +352,7 @@ def init_main_raw(file_path):
 def create_main_comparison_dict(main_dict_raw):
     main_list = list(main_dict_raw['data'])
     result_dict = {}
+    max_length = 0
     for item in main_list:
         # print(item[0] + " - " + str(item[1]))
         split = item[0].split(" ")
@@ -360,21 +361,34 @@ def create_main_comparison_dict(main_dict_raw):
         if len(split) > 1:
             suffix = " " + split[1] + " " + split[2]
 
+        max_length = length if length > max_length else max_length
         new_peptide = PeptideObject("main.csv", split[0], item[1], item[1]+length-1, length, suffix)
         if item[1] not in result_dict:
             result_dict[item[1]] = [new_peptide]
         else:
             result_dict[item[1]].append(new_peptide)
+
+    global MAIN_PEPTIDE_MAX_LENGTH
+    MAIN_PEPTIDE_MAX_LENGTH = max_length
     return result_dict
 
 
 def create_test_comparison_dict(sample_dict_raw, test_file_name):
     sample_list = list(sample_dict_raw['data'])
     result_dict = {}
+    max_length = 0
 
     for item in sample_list:
         # print(str(item[0]) + " - " + str(item[1]))
+        max_length = len(item[1]) if len(item[1]) > max_length else max_length
         result_dict[item[0]] = PeptideObject(test_file_name, item[1], item[0], item[0]+len(item[1])-1, len(item[1]), "")
+
+    if test_file_name == REF_FILE_NAME:
+        global REF_PEPTIDE_MAX_LENGTH
+        REF_PEPTIDE_MAX_LENGTH = max_length
+    else:
+        global TEST_PEPTIDE_MAX_LENGTH
+        TEST_PEPTIDE_MAX_LENGTH = max_length
     return result_dict
 
 

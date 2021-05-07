@@ -19,7 +19,7 @@ TEST_FILE_NAME = ""
 MAIN_FILE_NAME = ""
 
 INSERTIONS = []
-DELETIONS = [69, 70, 144]
+DELETIONS = []  # 69 70 144
 
 PEP_COLUMNS = ["peptide", "Peptide"]
 START_COLUMNS = ["start", "Start"]
@@ -59,10 +59,23 @@ class MainApplication:
         self.button_main = tk.Button(self.frame_input, text='Browse', command=self.browse_main)
 
         self.label_result_file_title = tk.Label(self.frame_input, text='Result File Name', bd='3', fg='blue',
-                                          font='Helvetica 9 bold')
+                                                font='Helvetica 9 bold')
 
         self.entry_result_file = tk.Entry(self.frame_input, bd='3', justify="center")
         self.label_result_file_extension = tk.Label(self.frame_input, text='.xlsx', bd='3')
+
+        self.label_indels_title = tk.Label(self.frame_input, text='Insertions and Deletions', bd='3', fg='blue',
+                                                font='Helvetica 9 bold')
+
+        self.label_insertions = tk.Label(self.frame_input, text='Insertions', bd='3')
+        self.entry_insertions = tk.Entry(self.frame_input, bd='3', justify="center")
+
+        self.label_deletions = tk.Label(self.frame_input, text='Deletions', bd='3')
+        self.entry_deletions = tk.Entry(self.frame_input, bd='3', justify="center")
+
+        self.label_indel_helper = tk.Label(self.frame_input,
+                                           text='Input should contain numbers with spaces between, eg. 69 70 144',
+                                           bd='3', fg='red')
 
         # place used to place the widgets in the frame
         self.label_input_files.place(relx=0.009, rely=0.005, relheight=0.05)
@@ -82,6 +95,15 @@ class MainApplication:
         self.label_result_file_title.place(relx=0.009, rely=0.32, relheight=0.05)
         self.entry_result_file.place(relx=0.20, rely=0.395, relwidth=0.55, relheight=0.05)
         self.label_result_file_extension.place(relx=0.75, rely=0.395, relheight=0.05)
+
+        self.label_indels_title.place(relx=0.009, rely=0.48, relheight=0.05)
+        self.label_insertions.place(relx=0.03, rely=0.56, relheight=0.05)
+        self.entry_insertions.place(relx=0.20, rely=0.56, relwidth=0.55, relheight=0.05)
+
+        self.label_deletions.place(relx=0.03, rely=0.64, relheight=0.05)
+        self.entry_deletions.place(relx=0.20, rely=0.64, relwidth=0.55, relheight=0.05)
+
+        self.label_indel_helper.place(relx=0.1, rely=0.70, relheight=0.05)
 
         ############################################################################################
         # placing the buttons below
@@ -123,6 +145,15 @@ class MainApplication:
             print("Unable to read main file")
             return
 
+        if not init_insertions(self.entry_insertions.get().strip()):
+            print("Insertion input error")
+            return
+        if not init_deletions(self.entry_deletions.get().strip()):
+            print("Deletion input error")
+            return
+
+        result_file = pd.ExcelWriter(self.entry_result_file.get() + ".xlsx")  # Validate this, maybe regex
+
         main_dictionary = create_main_comparison_dict(main_raw.to_dict('split'))
         ref_dictionary = create_test_comparison_dict(ref_raw.to_dict('split'), REF_FILE_NAME)
         test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
@@ -148,8 +179,6 @@ class MainApplication:
         L1n_L2m_df = create_match_df(L1_novel_L2_matched)
         L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
         L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
-
-        result_file = pd.ExcelWriter(self.entry_result_file.get() + ".xlsx")  # Validate this, maybe regex
 
         L1m_df.to_excel(result_file, sheet_name="L1M", index=False)
         L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
@@ -252,6 +281,12 @@ L1_matched_dict = {}
 
 
 def init_objects():
+    global INSERTIONS
+    INSERTIONS = []
+
+    global DELETIONS
+    DELETIONS = []
+
     global L1_novel
     L1_novel = ResultSheetObject()
     global L1_partial
@@ -347,6 +382,36 @@ def init_main_raw(file_path):
         return main_raw
     except ValueError:
         return None
+
+
+def init_insertions(insertion_entry):
+    if not insertion_entry:
+        return True
+    try:
+        global INSERTIONS
+        insertions = insertion_entry.split(" ")
+        for insertion in insertions:
+            if not str.isdigit(insertion):
+                raise
+            INSERTIONS.append(int(insertion))
+    except:
+        return False
+    return True
+
+
+def init_deletions(deletion_entry):
+    if not deletion_entry:
+        return True
+    try:
+        global DELETIONS
+        deletions = deletion_entry.split(" ")
+        for deletion in deletions:
+            if not str.isdigit(deletion):
+                raise
+            DELETIONS.append(int(deletion))
+    except:
+        return False
+    return True
 
 
 def create_main_comparison_dict(main_dict_raw):

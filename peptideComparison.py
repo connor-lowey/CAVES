@@ -103,7 +103,7 @@ class MainApplication:
         self.label_deletions.place(relx=0.03, rely=0.64, relheight=0.05)
         self.entry_deletions.place(relx=0.20, rely=0.64, relwidth=0.55, relheight=0.05)
 
-        self.label_indel_helper.place(relx=0.1, rely=0.70, relheight=0.05)
+        self.label_indel_helper.place(relx=0.07, rely=0.70, relheight=0.05)
 
         ############################################################################################
         # placing the buttons below

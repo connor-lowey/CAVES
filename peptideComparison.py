@@ -1,8 +1,13 @@
 import pandas as pd
 import tkinter as tk
+from tkinter import *
 from tkinter import filedialog
+
+from tkinter.messagebox import showinfo
+from tkinter.messagebox import showwarning
+from tkinter.font import Font
+
 from os import path
-from enum import Enum
 import sys
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
@@ -58,12 +63,6 @@ class MainApplication:
         self.button_test = tk.Button(self.frame_input, text='Browse', command=self.browse_test)
         self.button_main = tk.Button(self.frame_input, text='Browse', command=self.browse_main)
 
-        self.label_result_file_title = tk.Label(self.frame_input, text='Result File Name', bd='3', fg='blue',
-                                                font='Helvetica 9 bold')
-
-        self.entry_result_file = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.label_result_file_extension = tk.Label(self.frame_input, text='.xlsx', bd='3')
-
         self.label_indels_title = tk.Label(self.frame_input, text='Insertions and Deletions', bd='3', fg='blue',
                                                 font='Helvetica 9 bold')
 
@@ -77,8 +76,14 @@ class MainApplication:
                                            text='Input should contain numbers with spaces between, eg. 69 70 144',
                                            bd='3', fg='red')
 
+        self.label_result_file_title = tk.Label(self.frame_input, text='Result File Name', bd='3', fg='blue',
+                                                font='Helvetica 9 bold')
+
+        self.entry_result_file = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.label_result_file_extension = tk.Label(self.frame_input, text='.xlsx', bd='3')
+
         # place used to place the widgets in the frame
-        self.label_input_files.place(relx=0.009, rely=0.005, relheight=0.05)
+        self.label_input_files.place(relx=0.009, rely=0.0, relheight=0.05)
 
         self.label_ref.place(relx=0.05, rely=0.08, relheight=0.05)
         self.entry_ref.place(relx=0.20, rely=0.08, relwidth=0.55, relheight=0.05)
@@ -92,18 +97,19 @@ class MainApplication:
         self.entry_main.place(relx=0.20, rely=0.24, relwidth=0.55, relheight=0.05)
         self.button_main.place(relx=0.80, rely=0.24, relheight=0.05)
 
-        self.label_result_file_title.place(relx=0.009, rely=0.32, relheight=0.05)
-        self.entry_result_file.place(relx=0.20, rely=0.395, relwidth=0.55, relheight=0.05)
-        self.label_result_file_extension.place(relx=0.75, rely=0.395, relheight=0.05)
+        self.label_indels_title.place(relx=0.009, rely=0.32, relheight=0.05)
 
-        self.label_indels_title.place(relx=0.009, rely=0.48, relheight=0.05)
-        self.label_insertions.place(relx=0.03, rely=0.56, relheight=0.05)
-        self.entry_insertions.place(relx=0.20, rely=0.56, relwidth=0.55, relheight=0.05)
+        self.label_insertions.place(relx=0.03, rely=0.40, relheight=0.05)
+        self.entry_insertions.place(relx=0.20, rely=0.40, relwidth=0.55, relheight=0.05)
 
-        self.label_deletions.place(relx=0.03, rely=0.64, relheight=0.05)
-        self.entry_deletions.place(relx=0.20, rely=0.64, relwidth=0.55, relheight=0.05)
+        self.label_deletions.place(relx=0.03, rely=0.48, relheight=0.05)
+        self.entry_deletions.place(relx=0.20, rely=0.48, relwidth=0.55, relheight=0.05)
 
-        self.label_indel_helper.place(relx=0.07, rely=0.70, relheight=0.05)
+        self.label_indel_helper.place(relx=0.07, rely=0.54, relheight=0.05)
+
+        self.label_result_file_title.place(relx=0.009, rely=0.88, relheight=0.05)
+        self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.05)
+        self.label_result_file_extension.place(relx=0.75, rely=0.955, relheight=0.05)
 
         ############################################################################################
         # placing the buttons below
@@ -128,6 +134,52 @@ class MainApplication:
     def start_clicked(self):
         print("Compare Start")
         init_objects()
+
+        newWindow = Toplevel(window)
+        newWindow.title("Warning")
+        text = Text(newWindow)
+        text.insert(INSERT, "There is a 1,2 nucleotide insertion/deletion at position X in file FILENAME which will " 
+                            "shift the reading frame and alter the translated amino acid sequence. Epitopes "
+                            "predicted from these sequences will not produce biologically relevant matches when "
+                            "compared due to inherent differences caused by the frameshifted sequence. TOOL will "
+                            "still run but we do not suggest using these results.")
+        text.pack(expand=0, fill=BOTH)
+
+        # adding a tag to a part of text specifying the indices
+        text.tag_add("start", "1.7", "1.13")
+
+        bold_font = Font(family="Helvetica", size=12, weight="bold")
+        text.tag_config("start", font=bold_font)
+
+        # insertions = []
+        # deletions = []
+
+        # with open("ref_test_spike_alignment.fasta") as my_file:
+        #     count = 0
+        #
+        #     isRef = False
+        #     aminoAcidCount = 1
+        #     nucleotidesCount = 1
+        #     for line in my_file:
+        #         line = line.strip()
+        #         # print(line)
+        #         if line[0] == '>':
+        #             isRef = not isRef
+        #             aminoAcidCount = 1
+        #             nucleotidesCount = 1
+        #         else:
+        #             for char in line:
+        #                 if char == '-' and nucleotidesCount % 3 == 1:
+        #                     if isRef:
+        #                         insertions.append(aminoAcidCount)
+        #                     else:
+        #                         deletions.append(aminoAcidCount)
+        #                 if nucleotidesCount % 3 == 0:
+        #                     aminoAcidCount += 1
+        #                 nucleotidesCount += 1
+        #
+        #     print(insertions)
+        #     print(deletions)
 
         print("Reading Ref")
         ref_raw = init_ref_raw(self.entry_ref.get().strip())

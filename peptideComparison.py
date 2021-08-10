@@ -77,7 +77,7 @@ class MainApplication:
                                            text='Input should contain numbers with spaces between, eg. 69 70 144',
                                            bd='3', fg='red')
 
-        self.label_indels_or = tk.Label(self.frame_input, text='Or run insertions and deletions search', bd='3',
+        self.label_indels_or = tk.Label(self.frame_input, text='Or run an insertions and deletions search', bd='3',
                                         fg='blue', font='Helvetica 9 bold')
 
         self.label_indels_alignment = tk.Label(self.frame_input, text='Alignment File', bd='3')
@@ -88,46 +88,61 @@ class MainApplication:
                                                       text='Accepts .fasta, other, the next one, and even yes', bd='3',
                                                       fg='red')
 
+        self.label_radio_title = tk.Label(self.frame_input, text='Level Selection to Run', bd='3', fg='blue',
+                                          font='Helvetica 9 bold')
+
+        self.frame_radio_buttons = tk.Frame(self.frame_input, bd='0', padx=3, pady=3)
+        self.level_selection = IntVar()
+        self.level_selection.set(1)
+        self.radio_both_lvls = Radiobutton(self.frame_radio_buttons, text="Level 1 and 2", variable=self.level_selection,
+                                           value=1).grid(row=0, column=1, padx=50)
+        self.radio_lvl_one_only = Radiobutton(self.frame_radio_buttons, text="Level 1 only",
+                                              variable=self.level_selection, value=2).grid(row=0, column=2)
+        self.radio_lvl_two_only = Radiobutton(self.frame_radio_buttons, text="Level 2 only",
+                                              variable=self.level_selection, value=3).grid(row=0, column=3, padx=50)
+
         self.label_result_file_title = tk.Label(self.frame_input, text='Result File Name', bd='3', fg='blue',
                                                 font='Helvetica 9 bold')
-
         self.entry_result_file = tk.Entry(self.frame_input, bd='3', justify="center")
         self.label_result_file_extension = tk.Label(self.frame_input, text='.xlsx', bd='3')
 
         # place used to place the widgets in the frame
         self.label_input_files.place(relx=0.009, rely=0.0, relheight=0.05)
 
-        self.label_ref.place(relx=0.05, rely=0.08, relheight=0.035)
-        self.entry_ref.place(relx=0.20, rely=0.08, relwidth=0.55, relheight=0.035)
-        self.button_ref.place(relx=0.80, rely=0.08, relheight=0.035)
+        self.label_ref.place(relx=0.05, rely=0.06, relheight=0.035)
+        self.entry_ref.place(relx=0.20, rely=0.06, relwidth=0.55, relheight=0.035)
+        self.button_ref.place(relx=0.80, rely=0.06, relheight=0.030)
 
-        self.label_test.place(relx=0.05, rely=0.16, relheight=0.035)
-        self.entry_test.place(relx=0.20, rely=0.16, relwidth=0.55, relheight=0.035)
-        self.button_test.place(relx=0.80, rely=0.16, relheight=0.035)
+        self.label_test.place(relx=0.05, rely=0.14, relheight=0.035)
+        self.entry_test.place(relx=0.20, rely=0.14, relwidth=0.55, relheight=0.035)
+        self.button_test.place(relx=0.80, rely=0.14, relheight=0.030)
 
-        self.label_main.place(relx=0.05, rely=0.24, relheight=0.035)
-        self.entry_main.place(relx=0.20, rely=0.24, relwidth=0.55, relheight=0.035)
-        self.button_main.place(relx=0.80, rely=0.24, relheight=0.035)
+        self.label_main.place(relx=0.05, rely=0.22, relheight=0.035)
+        self.entry_main.place(relx=0.20, rely=0.22, relwidth=0.55, relheight=0.035)
+        self.button_main.place(relx=0.80, rely=0.22, relheight=0.030)
 
-        self.label_indels_title.place(relx=0.009, rely=0.32, relheight=0.05)
+        self.label_indels_title.place(relx=0.009, rely=0.30, relheight=0.05)
 
-        self.label_insertions.place(relx=0.03, rely=0.40, relheight=0.035)
-        self.entry_insertions.place(relx=0.20, rely=0.40, relwidth=0.55, relheight=0.035)
+        self.label_insertions.place(relx=0.03, rely=0.36, relheight=0.035)
+        self.entry_insertions.place(relx=0.20, rely=0.36, relwidth=0.55, relheight=0.035)
 
-        self.label_deletions.place(relx=0.03, rely=0.48, relheight=0.035)
-        self.entry_deletions.place(relx=0.20, rely=0.48, relwidth=0.55, relheight=0.035)
+        self.label_deletions.place(relx=0.03, rely=0.44, relheight=0.035)
+        self.entry_deletions.place(relx=0.20, rely=0.44, relwidth=0.55, relheight=0.035)
 
-        self.label_indels_helper.place(relx=0.07, rely=0.52, relheight=0.035)
+        self.label_indels_helper.place(relx=0.07, rely=0.48, relheight=0.035)
 
-        self.label_indels_or.place(relx=0.20, rely=0.58, relheight=0.035)
+        self.label_indels_or.place(relx=0.20, rely=0.54, relheight=0.035)
 
-        self.label_indels_alignment.place(relx=-0.025, rely=0.64, relheight=0.035)
-        self.entry_indels_alignment.place(relx=0.20, rely=0.64, relwidth=0.55, relheight=0.035)
-        self.button_indels_alignment.place(relx=0.80, rely=0.64, relheight=0.035)
+        self.label_indels_alignment.place(relx=0.0, rely=0.60, relheight=0.035)
+        self.entry_indels_alignment.place(relx=0.20, rely=0.60, relwidth=0.55, relheight=0.035)
+        self.button_indels_alignment.place(relx=0.80, rely=0.60, relheight=0.030)
 
-        self.label_indels_alignment_helper.place(relx=0.10, rely=0.68, relheight=0.035)
+        self.label_indels_alignment_helper.place(relx=0.10, rely=0.64, relheight=0.035)
 
-        self.label_result_file_title.place(relx=0.009, rely=0.88, relheight=0.035)
+        self.label_radio_title.place(relx=0.009, rely=0.72, relheight=0.035)
+        #  Radio buttons are placed in their own frame (self.frame_radio_buttons)
+
+        self.label_result_file_title.place(relx=0.009, rely=0.90, relheight=0.035)
         self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.035)
         self.label_result_file_extension.place(relx=0.75, rely=0.955, relheight=0.035)
 
@@ -137,13 +152,14 @@ class MainApplication:
         self.button_start = tk.Button(self.frame_button, text='Compare', command=self.start_clicked)
         self.button_cancel = tk.Button(self.frame_button, text='Cancel', command=master.destroy)
 
-        self.button_cancel.place(relx=0.6, rely=0.22, relheight=0.8, relwidth=0.18)
-        self.button_start.place(relx=0.8, rely=0.22, relheight=0.8, relwidth=0.18)
+        self.button_cancel.place(relx=0.6, rely=0.22, relheight=0.6, relwidth=0.18)
+        self.button_start.place(relx=0.8, rely=0.22, relheight=0.6, relwidth=0.18)
 
         ###############################################################################################
         # all the frames are placed in their respective positions
 
         self.frame_input.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.906)
+        self.frame_radio_buttons.place(relx=0.005, rely=0.80, relwidth=1, relheight=1)
         self.frame_button.place(relx=0.005, rely=0.915, relwidth=0.99, relheight=0.08)
 
         self.frame.place(relx=0.02, rely=0.02, relwidth=0.96, relheight=0.96)
@@ -433,7 +449,7 @@ def init_alignment(file_path):
         sequences = build_sequences(my_file)
 
         indelResults = find_indels(sequences["ref"], sequences["test"])
-        # print(indelResults)
+        print(indelResults)
         global INSERTIONS
         INSERTIONS = indelResults["insertions"]
         global DELETIONS

@@ -1,3 +1,4 @@
+from math import ceil
 import pandas as pd
 import tkinter as tk
 from tkinter import *
@@ -41,7 +42,7 @@ class MainApplication:
 
     def __init__(self, master):
         self.master = master
-        self.canvas = tk.Canvas(master, width=450, height=500)
+        self.canvas = tk.Canvas(master, width=550, height=690)  # width=450, height=500)
         # to make a frame
         self.frame = tk.Frame(master, bg='white')
 
@@ -64,7 +65,7 @@ class MainApplication:
         self.button_main = tk.Button(self.frame_input, text='Browse', command=self.browse_main)
 
         self.label_indels_title = tk.Label(self.frame_input, text='Insertions and Deletions', bd='3', fg='blue',
-                                                font='Helvetica 9 bold')
+                                           font='Helvetica 9 bold')
 
         self.label_insertions = tk.Label(self.frame_input, text='Insertions', bd='3')
         self.entry_insertions = tk.Entry(self.frame_input, bd='3', justify="center")
@@ -72,9 +73,20 @@ class MainApplication:
         self.label_deletions = tk.Label(self.frame_input, text='Deletions', bd='3')
         self.entry_deletions = tk.Entry(self.frame_input, bd='3', justify="center")
 
-        self.label_indel_helper = tk.Label(self.frame_input,
+        self.label_indels_helper = tk.Label(self.frame_input,
                                            text='Input should contain numbers with spaces between, eg. 69 70 144',
                                            bd='3', fg='red')
+
+        self.label_indels_or = tk.Label(self.frame_input, text='Or run insertions and deletions search', bd='3',
+                                        fg='blue', font='Helvetica 9 bold')
+
+        self.label_indels_alignment = tk.Label(self.frame_input, text='Alignment File', bd='3')
+        self.entry_indels_alignment = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.button_indels_alignment = tk.Button(self.frame_input, text='Browse', command=self.browse_alignment)
+
+        self.label_indels_alignment_helper = tk.Label(self.frame_input,
+                                                      text='Accepts .fasta, other, the next one, and even yes', bd='3',
+                                                      fg='red')
 
         self.label_result_file_title = tk.Label(self.frame_input, text='Result File Name', bd='3', fg='blue',
                                                 font='Helvetica 9 bold')
@@ -85,31 +97,39 @@ class MainApplication:
         # place used to place the widgets in the frame
         self.label_input_files.place(relx=0.009, rely=0.0, relheight=0.05)
 
-        self.label_ref.place(relx=0.05, rely=0.08, relheight=0.05)
-        self.entry_ref.place(relx=0.20, rely=0.08, relwidth=0.55, relheight=0.05)
-        self.button_ref.place(relx=0.80, rely=0.08, relheight=0.05)
+        self.label_ref.place(relx=0.05, rely=0.08, relheight=0.035)
+        self.entry_ref.place(relx=0.20, rely=0.08, relwidth=0.55, relheight=0.035)
+        self.button_ref.place(relx=0.80, rely=0.08, relheight=0.035)
 
-        self.label_test.place(relx=0.05, rely=0.16, relheight=0.05)
-        self.entry_test.place(relx=0.20, rely=0.16, relwidth=0.55, relheight=0.05)
-        self.button_test.place(relx=0.80, rely=0.16, relheight=0.05)
+        self.label_test.place(relx=0.05, rely=0.16, relheight=0.035)
+        self.entry_test.place(relx=0.20, rely=0.16, relwidth=0.55, relheight=0.035)
+        self.button_test.place(relx=0.80, rely=0.16, relheight=0.035)
 
-        self.label_main.place(relx=0.05, rely=0.24, relheight=0.05)
-        self.entry_main.place(relx=0.20, rely=0.24, relwidth=0.55, relheight=0.05)
-        self.button_main.place(relx=0.80, rely=0.24, relheight=0.05)
+        self.label_main.place(relx=0.05, rely=0.24, relheight=0.035)
+        self.entry_main.place(relx=0.20, rely=0.24, relwidth=0.55, relheight=0.035)
+        self.button_main.place(relx=0.80, rely=0.24, relheight=0.035)
 
         self.label_indels_title.place(relx=0.009, rely=0.32, relheight=0.05)
 
-        self.label_insertions.place(relx=0.03, rely=0.40, relheight=0.05)
-        self.entry_insertions.place(relx=0.20, rely=0.40, relwidth=0.55, relheight=0.05)
+        self.label_insertions.place(relx=0.03, rely=0.40, relheight=0.035)
+        self.entry_insertions.place(relx=0.20, rely=0.40, relwidth=0.55, relheight=0.035)
 
-        self.label_deletions.place(relx=0.03, rely=0.48, relheight=0.05)
-        self.entry_deletions.place(relx=0.20, rely=0.48, relwidth=0.55, relheight=0.05)
+        self.label_deletions.place(relx=0.03, rely=0.48, relheight=0.035)
+        self.entry_deletions.place(relx=0.20, rely=0.48, relwidth=0.55, relheight=0.035)
 
-        self.label_indel_helper.place(relx=0.07, rely=0.54, relheight=0.05)
+        self.label_indels_helper.place(relx=0.07, rely=0.52, relheight=0.035)
 
-        self.label_result_file_title.place(relx=0.009, rely=0.88, relheight=0.05)
-        self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.05)
-        self.label_result_file_extension.place(relx=0.75, rely=0.955, relheight=0.05)
+        self.label_indels_or.place(relx=0.20, rely=0.58, relheight=0.035)
+
+        self.label_indels_alignment.place(relx=-0.025, rely=0.64, relheight=0.035)
+        self.entry_indels_alignment.place(relx=0.20, rely=0.64, relwidth=0.55, relheight=0.035)
+        self.button_indels_alignment.place(relx=0.80, rely=0.64, relheight=0.035)
+
+        self.label_indels_alignment_helper.place(relx=0.10, rely=0.68, relheight=0.035)
+
+        self.label_result_file_title.place(relx=0.009, rely=0.88, relheight=0.035)
+        self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.035)
+        self.label_result_file_extension.place(relx=0.75, rely=0.955, relheight=0.035)
 
         ############################################################################################
         # placing the buttons below
@@ -135,74 +155,34 @@ class MainApplication:
         print("Compare Start")
         init_objects()
 
-        newWindow = Toplevel(window)
-        newWindow.title("Warning")
-        text = Text(newWindow)
-        text.insert(INSERT, "There is a 1,2 nucleotide insertion/deletion at position X in file FILENAME which will " 
-                            "shift the reading frame and alter the translated amino acid sequence. Epitopes "
-                            "predicted from these sequences will not produce biologically relevant matches when "
-                            "compared due to inherent differences caused by the frameshifted sequence. TOOL will "
-                            "still run but we do not suggest using these results.")
-        text.pack(expand=0, fill=BOTH)
-
-        # adding a tag to a part of text specifying the indices
-        text.tag_add("start", "1.7", "1.13")
-
-        bold_font = Font(family="Helvetica", size=12, weight="bold")
-        text.tag_config("start", font=bold_font)
-
-        # insertions = []
-        # deletions = []
-
-        # with open("ref_test_spike_alignment.fasta") as my_file:
-        #     count = 0
-        #
-        #     isRef = False
-        #     aminoAcidCount = 1
-        #     nucleotidesCount = 1
-        #     for line in my_file:
-        #         line = line.strip()
-        #         # print(line)
-        #         if line[0] == '>':
-        #             isRef = not isRef
-        #             aminoAcidCount = 1
-        #             nucleotidesCount = 1
-        #         else:
-        #             for char in line:
-        #                 if char == '-' and nucleotidesCount % 3 == 1:
-        #                     if isRef:
-        #                         insertions.append(aminoAcidCount)
-        #                     else:
-        #                         deletions.append(aminoAcidCount)
-        #                 if nucleotidesCount % 3 == 0:
-        #                     aminoAcidCount += 1
-        #                 nucleotidesCount += 1
-        #
-        #     print(insertions)
-        #     print(deletions)
-
-        print("Reading Ref")
+        print("Reading Ref file")
         ref_raw = init_ref_raw(self.entry_ref.get().strip())
         if ref_raw is None:
             print("Unable to read ref file")
             return
-        print("Reading Test")
+        print("Reading Test file")
         test_raw = init_test_raw(self.entry_test.get().strip())
         if test_raw is None:
             print("Unable to read test file")
             return
-        print("Reading main")
+        print("Reading main file")
         main_raw = init_main_raw(self.entry_main.get().strip())
         if main_raw is None:
             print("Unable to read main file")
             return
 
-        if not init_insertions(self.entry_insertions.get().strip()):
-            print("Insertion input error")
-            return
-        if not init_deletions(self.entry_deletions.get().strip()):
-            print("Deletion input error")
-            return
+        if self.entry_indels_alignment.get().strip() != "":
+            print("Reading alignment file")
+            if not init_alignment(self.entry_indels_alignment.get().strip()):
+                print("Unable to create insertion and deletion lists")
+                return
+        else:
+            if not init_insertions(self.entry_insertions.get().strip()):
+                print("Insertion input error")
+                return
+            if not init_deletions(self.entry_deletions.get().strip()):
+                print("Deletion input error")
+                return
 
         result_file = pd.ExcelWriter(self.entry_result_file.get() + ".xlsx")  # Validate this, maybe regex
 
@@ -269,6 +249,13 @@ class MainApplication:
                                                                                                 ("all files", "*.*")))
         self.entry_main.delete(0, tk.END)
         self.entry_main.insert(0, filename)
+
+    def browse_alignment(self):
+        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("FASTA files",
+                                                                                                 "*.fasta*"),
+                                                                                                ("all files", "*.*")))
+        self.entry_indels_alignment.delete(0, tk.END)
+        self.entry_indels_alignment.insert(0, filename)
 
     # This function is just a test function assigned to buttons which don't have a specific function
     def nothing(self):
@@ -436,12 +423,56 @@ def init_main_raw(file_path):
         return None
 
 
+def init_alignment(file_path):
+    if not path.exists(file_path):
+        print("Unable to find alignment file from path: " + file_path)
+        return False
+
+    # try:
+    with open(file_path) as my_file:
+        sequences = build_sequences(my_file)
+
+        indelResults = find_indels(sequences["ref"], sequences["test"])
+        # print(indelResults)
+        global INSERTIONS
+        INSERTIONS = indelResults["insertions"]
+        global DELETIONS
+        DELETIONS = indelResults["deletions"]
+
+        # print(INSERTIONS)
+        # print(DELETIONS)
+
+        if indelResults["inFrameshifts"] or indelResults["delFrameshifts"]:
+            newWindow = Toplevel(window)
+            newWindow.title("Warning")
+            text = Text(newWindow)
+            text.insert(INSERT,
+                        "There is a 1,2 nucleotide insertion/deletion at position X in file FILENAME which will "
+                        "shift the reading frame and alter the translated amino acid sequence. Epitopes "
+                        "predicted from these sequences will not produce biologically relevant matches when "
+                        "compared due to inherent differences caused by the frameshifted sequence. TOOL will "
+                        "still run but we do not suggest using these results.")
+
+            frameshift_table = generate_frameshift_table(indelResults["inFrameshifts"],
+                                                         indelResults["delFrameshifts"])
+            text.insert(INSERT, "\n\n\n\n\n" + frameshift_table)
+            text.pack(expand=0, fill=BOTH)
+
+            # adding a tag to a part of text specifying the indices
+            text.tag_add("start", "1.10", "1.13")
+            bold_font = Font(family="Helvetica", size=12, weight="bold")
+            text.tag_config("start", font=bold_font)
+    # except:
+
+    return True
+
+
 def init_insertions(insertion_entry):
     if not insertion_entry:
         return True
     try:
         global INSERTIONS
-        insertions = insertion_entry.split(" ")
+        insertions = insertion_entry.split()
         for insertion in insertions:
             if not str.isdigit(insertion):
                 raise
@@ -456,7 +487,7 @@ def init_deletions(deletion_entry):
         return True
     try:
         global DELETIONS
-        deletions = deletion_entry.split(" ")
+        deletions = deletion_entry.split()
         for deletion in deletions:
             if not str.isdigit(deletion):
                 raise
@@ -464,6 +495,85 @@ def init_deletions(deletion_entry):
     except:
         return False
     return True
+
+
+def build_sequences(file):
+    results = {}
+
+    refSeq = ""
+    testSeq = ""
+    refCreated = True
+    for line in file:
+        if line[0] == ">":
+            refCreated = not refCreated
+        else:
+            line = line.rstrip("\n")
+            if not refCreated:
+                refSeq += line
+            else:
+                testSeq += line
+
+    results["ref"] = refSeq
+    results["test"] = testSeq
+    return results
+
+
+def find_indels(ref_sequence, test_sequence):
+    results = {}
+
+    refResults = find_seq_indels(ref_sequence)
+    results["insertions"] = refResults["indels"]
+    results["inFrameshifts"] = refResults["frameshifts"]
+
+    testResults = find_seq_indels(test_sequence)
+    results["deletions"] = testResults["indels"]
+    results["delFrameshifts"] = testResults["frameshifts"]
+
+    return results
+
+
+def find_seq_indels(sequence):
+    results = {"indels": [], "frameshifts": {}}
+
+    dashCount = 0
+    nucleotidesCount = 0
+    for char in sequence:
+        nucleotidesCount += 1
+        if char == '-':
+            if dashCount != 2:
+                dashCount += 1
+            else:
+                results["indels"].append(ceil(nucleotidesCount/3))
+                dashCount = 0
+        else:
+            if dashCount == 1:
+                results["frameshifts"][nucleotidesCount-1] = 1
+                dashCount = 0
+            if dashCount == 2:
+                results["frameshifts"][nucleotidesCount - 2] = 2
+                dashCount = 0
+    if dashCount == 1:
+        results["frameshifts"][nucleotidesCount] = 1
+    if dashCount == 2:
+        results["frameshifts"][nucleotidesCount - 1] = 2
+    return results
+
+
+def generate_frameshift_table(in_frameshifts, del_frameshifts):
+    result = "Nucleotide position | # of ins/dels | Insertion/Deletion | Sequence in File\n"
+    for key, value in in_frameshifts.items():
+        nucleotideString = str(key)
+        while len(nucleotideString) < 20:
+            nucleotideString += " "
+        result += nucleotideString + "| " + str(value) + "             | Insertion          | 1\n"
+
+    for key, value in del_frameshifts.items():
+        nucleotideString = str(key)
+        while len(nucleotideString) < 20:
+            nucleotideString += " "
+        result += nucleotideString + "| " + str(value) + "             | Deletion           | 2\n"
+
+    return result
 
 
 def create_main_comparison_dict(main_dict_raw):

@@ -169,7 +169,7 @@ class MainApplication:
     # This function is called when the start button is clicked
     def start_clicked(self):
         print("Compare Start")
-        init_objects()
+        init_objects(self.level_selection.get())
 
         print("Reading Ref file")
         ref_raw = init_ref_raw(self.entry_ref.get().strip())
@@ -311,6 +311,10 @@ L1_novel = ResultSheetObject()
 L1_partial = ResultSheetObject()
 L1_matched = ResultSheetObject()
 
+L2_novel = ResultSheetObject()
+L2_partial = ResultSheetObject()
+L2_matched = ResultSheetObject()
+
 L1_novel_L2_novel = ResultSheetObject()
 L1_novel_L2_partial = ResultSheetObject()
 L1_novel_L2_matched = ResultSheetObject()
@@ -335,47 +339,57 @@ L1_matched_dict = {}
 # ----------------------------------------------- FUNCTIONS
 
 
-def init_objects():
+def init_objects(lvl_sel):
     global INSERTIONS
     INSERTIONS = []
 
     global DELETIONS
     DELETIONS = []
 
-    global L1_novel
-    L1_novel = ResultSheetObject()
-    global L1_partial
-    L1_partial = ResultSheetObject()
-    global L1_matched
-    L1_matched = ResultSheetObject()
+    if lvl_sel == 1 or lvl_sel == 2:
+        global L1_novel
+        L1_novel = ResultSheetObject()
+        global L1_partial
+        L1_partial = ResultSheetObject()
+        global L1_matched
+        L1_matched = ResultSheetObject()
 
-    global L1_novel_L2_novel
-    L1_novel_L2_novel = ResultSheetObject()
-    global L1_novel_L2_partial
-    L1_novel_L2_partial = ResultSheetObject()
-    global L1_novel_L2_matched
-    L1_novel_L2_matched = ResultSheetObject()
+    if lvl_sel == 3:
+        global L2_novel
+        L2_novel = ResultSheetObject()
+        global L2_partial
+        L2_partial = ResultSheetObject()
+        global L2_matched
+        L2_matched = ResultSheetObject()
 
-    global L1_partial_L2_novel
-    L1_partial_L2_novel = ResultSheetObject()
-    global L1_partial_L2_partial
-    L1_partial_L2_partial = ResultSheetObject()
-    global L1_partial_L2_matched
-    L1_partial_L2_matched = ResultSheetObject()
+    if lvl_sel == 1:
+        global L1_novel_L2_novel
+        L1_novel_L2_novel = ResultSheetObject()
+        global L1_novel_L2_partial
+        L1_novel_L2_partial = ResultSheetObject()
+        global L1_novel_L2_matched
+        L1_novel_L2_matched = ResultSheetObject()
 
-    global L1_matched_L2_novel
-    L1_matched_L2_novel = ResultSheetObject()
-    global L1_matched_L2_partial
-    L1_matched_L2_partial = ResultSheetObject()
-    global L1_matched_L2_matched
-    L1_matched_L2_matched = ResultSheetObject()
+        global L1_partial_L2_novel
+        L1_partial_L2_novel = ResultSheetObject()
+        global L1_partial_L2_partial
+        L1_partial_L2_partial = ResultSheetObject()
+        global L1_partial_L2_matched
+        L1_partial_L2_matched = ResultSheetObject()
 
-    global L1_novel_dict
-    L1_novel_dict = {}
-    global L1_partial_dict
-    L1_partial_dict = {}
-    global L1_matched_dict
-    L1_matched_dict = {}
+        global L1_matched_L2_novel
+        L1_matched_L2_novel = ResultSheetObject()
+        global L1_matched_L2_partial
+        L1_matched_L2_partial = ResultSheetObject()
+        global L1_matched_L2_matched
+        L1_matched_L2_matched = ResultSheetObject()
+
+        global L1_novel_dict
+        L1_novel_dict = {}
+        global L1_partial_dict
+        L1_partial_dict = {}
+        global L1_matched_dict
+        L1_matched_dict = {}
 
 
 def init_ref_raw(file_path):

@@ -5,7 +5,6 @@ from tkinter import *
 from tkinter import filedialog
 
 from tkinter.messagebox import showinfo
-from tkinter.messagebox import showwarning
 from tkinter.font import Font
 
 from os import path
@@ -28,7 +27,7 @@ INSERTIONS = []
 DELETIONS = []  # 69 70 144
 
 PEP_COLUMNS = ["peptide", "Peptide"]
-START_COLUMNS = ["start", "Start"]
+START_COLUMNS = ["start", "Start", "Peptide start"]
 
 REF_PEPTIDE_MAX_LENGTH = 50  # 9
 TEST_PEPTIDE_MAX_LENGTH = 50  # 9
@@ -246,6 +245,7 @@ class MainApplication:
 
         result_file.save()
 
+        showinfo("CAVES", "Comparison Complete!")
         print("Compared")
 
     def browse_ref(self):
@@ -463,25 +463,21 @@ def init_alignment(file_path):
         sequences = build_sequences(my_file)
 
         indelResults = find_indels(sequences["ref"], sequences["test"])
-        print(indelResults)
+        print("Insertions", indelResults["insertions"], "Deletions", indelResults["deletions"])
         global INSERTIONS
         INSERTIONS = indelResults["insertions"]
         global DELETIONS
         DELETIONS = indelResults["deletions"]
-
-        # print(INSERTIONS)
-        # print(DELETIONS)
 
         if indelResults["inFrameshifts"] or indelResults["delFrameshifts"]:
             newWindow = Toplevel(window)
             newWindow.title("Warning")
             text = Text(newWindow)
             text.insert(INSERT,
-                        "There is a 1,2 nucleotide insertion/deletion at position X in file FILENAME which will "
-                        "shift the reading frame and alter the translated amino acid sequence. Epitopes "
-                        "predicted from these sequences will not produce biologically relevant matches when "
-                        "compared due to inherent differences caused by the frameshifted sequence. TOOL will "
-                        "still run but we do not suggest using these results.")
+                        "TOOL found one or more frameshift mutations in the pairwise alignment file provided "
+                        "(listed below). Epitopes predicted from these sequences will not produce biologically "
+                        "relevant matches when compared due to inherent differences in amino acids caused by the "
+                        "frameshifted sequence. TOOL will still run but we do not suggest using these results.")
 
             frameshift_table = generate_frameshift_table(indelResults["inFrameshifts"],
                                                          indelResults["delFrameshifts"])
@@ -489,9 +485,11 @@ def init_alignment(file_path):
             text.pack(expand=0, fill=BOTH)
 
             # adding a tag to a part of text specifying the indices
-            text.tag_add("start", "1.10", "1.13")
-            bold_font = Font(family="Helvetica", size=12, weight="bold")
-            text.tag_config("start", font=bold_font)
+            text.tag_add("bold1", "1.23", "1.43")
+            text.tag_add("bold2", "1.149", "1.186")
+            bold_font = Font(family="Helvetica", size=10, weight="bold")
+            text.tag_config("bold1", font=bold_font)
+            text.tag_config("bold2", font=bold_font)
     # except:
 
     return True
@@ -1061,6 +1059,6 @@ def generate_test_comparison_results(ref_dict, test_dict):
 if __name__ == '__main__':
 
     window = tk.Tk()
-    window.title("Peptide Comparison")
+    window.title("CAVES")
     app = MainApplication(window)
     window.mainloop()

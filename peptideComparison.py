@@ -719,11 +719,7 @@ def create_novel_df(obj):
                          'End': obj.end_one, 'Length': obj.length_one})
 
 
-def insert_level_one_obj(lvl_one_dict, pep, is_partial):
-    if is_partial:
-        curr_pep = pep[0]
-    else:
-        curr_pep = pep
+def insert_level_one_obj(lvl_one_dict, curr_pep):
     if curr_pep.start in lvl_one_dict:
         matched = False
         for item in lvl_one_dict[curr_pep.start]:
@@ -732,10 +728,11 @@ def insert_level_one_obj(lvl_one_dict, pep, is_partial):
                 matched = True
         if not matched:
             lvl_one_dict[curr_pep.start].append(curr_pep)
+            return True
     else:
         lvl_one_dict[curr_pep.start] = [curr_pep]
-
-    return
+        return True
+    return False
 
 
 def insert_matched(result_obj, pep_one, pep_two):
@@ -805,22 +802,25 @@ def input_main_comparison_result(curr_pep, results, input_file):
 
 def input_test_comparison_result(curr_pep, results):
     if "novel" in results:
-        insert_level_one_obj(L1_novel_dict, curr_pep, False)
+        insert_level_one_obj(L1_novel_dict, curr_pep)
         res_obj = get_result_object("novel", "", 1)
         insert_novel(res_obj, curr_pep)
+        for novel in results["novel"]:
+            if insert_level_one_obj(L1_novel_dict, novel):
+                insert_novel(res_obj, novel)
     else:
         if "matched" in results:
-            insert_level_one_obj(L1_matched_dict, curr_pep, False)
+            insert_level_one_obj(L1_matched_dict, curr_pep)
             result_obj = get_result_object("matched", "", 1)
             for match in results["matched"]:
-                insert_level_one_obj(L1_matched_dict, match, False)
-                insert_matched(result_obj, curr_pep, match)
+                if insert_level_one_obj(L1_matched_dict, match):
+                    insert_matched(result_obj, curr_pep, match)
         if "partial" in results:
-            insert_level_one_obj(L1_partial_dict, curr_pep, False)
+            insert_level_one_obj(L1_partial_dict, curr_pep)
             result_obj = get_result_object("partial", "", 1)
             for partial in results["partial"]:
-                insert_level_one_obj(L1_partial_dict, partial, True)
-                insert_partial(result_obj, curr_pep, partial)
+                if insert_level_one_obj(L1_partial_dict, partial[0]):
+                    insert_partial(result_obj, curr_pep, partial)
 
 
 def calculate_main_comparison_parameters(test_peptide, aligned_start, aligned_end, main_peptide):
@@ -886,7 +886,6 @@ def compare_to_test_string(ref_peptide, test_peptide):
         results.append("matched")
     elif len(novel_positions) > 0:
         results.append("novel")
-        results.append(novel_positions)
     else:
         results.append("partial")
         results.append(matched_positions)
@@ -926,7 +925,7 @@ def compare_to_main_string(test_peptide, aligned_start, aligned_end, main_peptid
 
 def generate_test_comparisons(dictionary, ref_peptide):
     result = {}
-    comp_results = {"matched": [], "partial": [], "novel_pos_dict": {}}
+    comp_results = {"matched": [], "partial": [], "novel_test_peps": []}
     aligned_test_start = align_to_test_position(ref_peptide.start)
     aligned_test_end = align_to_test_position(ref_peptide.end)
 
@@ -940,27 +939,22 @@ def generate_test_comparisons(dictionary, ref_peptide):
                 (test_peptide.start <= aligned_test_end <= test_peptide.end)) or \
                     ((aligned_test_start <= test_peptide.start <= aligned_test_end) or
                      (aligned_test_start <= test_peptide.end <= aligned_test_end)):
-                comparison = \
-                    compare_to_test_string(ref_peptide, test_peptide)
+                comparison = compare_to_test_string(ref_peptide, test_peptide)
                 if comparison[0] == "matched":
                     comp_results["matched"].append(test_peptide)
                 elif comparison[0] == "partial":
                     comp_results["partial"].append([test_peptide, comparison[1]])
                 elif comparison[0] == "novel":
-                    for pos, letter in comparison[1].items():
-                        comp_results["novel_pos_dict"][pos] = letter
+                    comp_results["novel_test_peps"].append(test_peptide)
+
         curr_pos += 1
 
-    if len(comp_results["novel_pos_dict"]) > 0:
-        if len(comp_results["partial"]) == 0:
-            result["novel"] = ref_peptide
-        else:
-            if all_novel_position_covered(comp_results["partial"], comp_results["novel_pos_dict"]):
-                result["partial"] = comp_results["partial"]
-            else:
-                result["novel"] = ref_peptide
+    if len(comp_results["novel_test_peps"]) > 0:
+        result["novel"] = []
+        for novel_test_pep in comp_results["novel_test_peps"]:
+            result["novel"].append(novel_test_pep)
     elif len(comp_results["matched"]) == 0 and len(comp_results["partial"]) == 0:
-        result["novel"] = ref_peptide
+        result["novel"] = []
     else:
         if len(comp_results["matched"]) > 0:
             result["matched"] = comp_results["matched"]
@@ -1033,8 +1027,13 @@ def calculate_input_novel_test_peps(test_dict):
                 if potential.peptide == value.peptide and potential.origin_file == value.origin_file \
                         and potential.length == value.length:
                     matched = True
+        if key in L1_novel_dict:
+            for potential in L1_novel_dict[key]:
+                if potential.peptide == value.peptide and potential.origin_file == value.origin_file \
+                        and potential.length == value.length:
+                    matched = True
         if not matched:
-            insert_level_one_obj(L1_novel_dict, value, False)
+            insert_level_one_obj(L1_novel_dict, value)
             res_obj = get_result_object("novel", "", 1)
             insert_novel(res_obj, value)
 

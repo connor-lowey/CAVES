@@ -26,7 +26,9 @@ MAIN_FILE_NAME = ""
 INSERTIONS = []
 DELETIONS = []  # 69 70 144
 
-PEP_COLUMNS = ["peptide", "Peptide"]
+LVL_SEL = 1
+
+PEP_COLUMNS = ["peptide", "Peptide", "Peptide sequence"]
 START_COLUMNS = ["start", "Start", "Peptide start"]
 
 REF_PEPTIDE_MAX_LENGTH = 50  # 9
@@ -165,7 +167,6 @@ class MainApplication:
         self.canvas.pack()
         ##############################################################################################
 
-    # This function is called when the start button is clicked
     def start_clicked(self):
         print("Compare Start")
         init_objects(self.level_selection.get())
@@ -345,6 +346,9 @@ def init_objects(lvl_sel):
 
     global DELETIONS
     DELETIONS = []
+
+    global LVL_SEL
+    LVL_SEL = lvl_sel
 
     if lvl_sel == 1 or lvl_sel == 2:
         global L1_novel
@@ -735,6 +739,27 @@ def insert_level_one_obj(lvl_one_dict, curr_pep):
     return False
 
 
+def is_in_result_list(obj, ref, test):
+    result = False
+    if ref.peptide in obj.peptide_one:
+        indexs = []
+        index_pos = 0
+        while True:
+            try:
+                index_pos = obj.peptide_one.index(ref.peptide, index_pos)
+                indexs.append(index_pos)
+                index_pos += 1
+            except ValueError as e:
+                break
+        for ind in indexs:
+            if ref.peptide == obj.peptide_one[ind] and ref.origin_file == obj.origin_file_one[ind] \
+                    and test.peptide == obj.peptide_two[ind] and test.origin_file == obj.origin_file_two[ind]:
+                result = True
+                break
+
+    return result
+
+
 def insert_matched(result_obj, pep_one, pep_two):
     result_obj.origin_file_one.append(pep_one.origin_file + pep_one.suffix)
     result_obj.peptide_one.append(pep_one.peptide)
@@ -813,13 +838,15 @@ def input_test_comparison_result(curr_pep, results):
             insert_level_one_obj(L1_matched_dict, curr_pep)
             result_obj = get_result_object("matched", "", 1)
             for match in results["matched"]:
-                if insert_level_one_obj(L1_matched_dict, match):
+                insert_level_one_obj(L1_matched_dict, match)
+                if not is_in_result_list(result_obj, curr_pep, match):
                     insert_matched(result_obj, curr_pep, match)
         if "partial" in results:
             insert_level_one_obj(L1_partial_dict, curr_pep)
             result_obj = get_result_object("partial", "", 1)
             for partial in results["partial"]:
-                if insert_level_one_obj(L1_partial_dict, partial[0]):
+                insert_level_one_obj(L1_partial_dict, partial[0])
+                if not is_in_result_list(result_obj, curr_pep, partial[0]):
                     insert_partial(result_obj, curr_pep, partial)
 
 

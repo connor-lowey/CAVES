@@ -3,6 +3,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
+from datetime import datetime
 
 from tkinter.messagebox import showinfo
 from tkinter.font import Font
@@ -26,6 +27,7 @@ MAIN_FILE_NAME = ""
 INSERTIONS = []
 DELETIONS = []  # 69 70 144
 
+THRESHOLD = 1
 LVL_SEL = 1
 
 PEP_COLUMNS = ["peptide", "Peptide", "Peptide sequence"]
@@ -50,9 +52,11 @@ class MainApplication:
         ############################################################################################
         # Frame Input
         # this frame is placed in the original frame
+
+        title_font = Font(family="Calibri", size=12, weight="bold")
+
         self.frame_input = tk.Frame(self.frame, bd='10', padx=3, pady=3)
-        self.label_input_files = tk.Label(self.frame_input, text='Input File Paths', bd='3', fg='blue',
-                                          font='Helvetica 9 bold')
+        self.label_input_files = tk.Label(self.frame_input, text='Input File Paths', bd='3', fg='blue', font=title_font)
         self.label_ref = tk.Label(self.frame_input, text='Ref', bd='3')
         self.label_test = tk.Label(self.frame_input, text='Test', bd='3')
         self.label_main = tk.Label(self.frame_input, text='Main', bd='3')
@@ -66,7 +70,7 @@ class MainApplication:
         self.button_main = tk.Button(self.frame_input, text='Browse', command=self.browse_main)
 
         self.label_indels_title = tk.Label(self.frame_input, text='Insertions and Deletions', bd='3', fg='blue',
-                                           font='Helvetica 9 bold')
+                                           font=title_font)
 
         self.label_insertions = tk.Label(self.frame_input, text='Insertions', bd='3')
         self.entry_insertions = tk.Entry(self.frame_input, bd='3', justify="center")
@@ -75,40 +79,43 @@ class MainApplication:
         self.entry_deletions = tk.Entry(self.frame_input, bd='3', justify="center")
 
         self.label_indels_helper = tk.Label(self.frame_input,
-                                           text='Input should contain numbers with spaces between, eg. 69 70 144',
-                                           bd='3', fg='red')
+                                            text='Input should contain numbers with spaces between, eg. 69 70 144',
+                                            bd='3', fg='red')
 
         self.label_indels_or = tk.Label(self.frame_input, text='Or run an insertions and deletions search', bd='3',
-                                        fg='blue', font='Helvetica 9 bold')
+                                        fg='blue')
 
         self.label_indels_alignment = tk.Label(self.frame_input, text='Alignment File', bd='3')
         self.entry_indels_alignment = tk.Entry(self.frame_input, bd='3', justify="center")
         self.button_indels_alignment = tk.Button(self.frame_input, text='Browse', command=self.browse_alignment)
 
-        self.label_indels_alignment_helper = tk.Label(self.frame_input,
-                                                      text='Accepts .fasta, other, the next one, and even yes', bd='3',
-                                                      fg='red')
+        self.label_threshold_title = tk.Label(self.frame_input, text='Minimum Peptide Length', bd='3', fg='blue',
+                                              font=title_font)
+        self.entry_threshold = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.label_threshold_helper = tk.Label(self.frame_input,
+                                               text='Default minimum peptide length is 1',
+                                               bd='3', fg='red')
 
         self.label_radio_title = tk.Label(self.frame_input, text='Level Selection to Run', bd='3', fg='blue',
-                                          font='Helvetica 9 bold')
+                                          font=title_font)
 
         self.frame_radio_buttons = tk.Frame(self.frame_input, bd='0', padx=3, pady=3)
         self.level_selection = IntVar()
         self.level_selection.set(1)
-        self.radio_both_lvls = Radiobutton(self.frame_radio_buttons, text="Level 1 and 2", variable=self.level_selection,
-                                           value=1).grid(row=0, column=1, padx=50)
+        self.radio_both_lvls = Radiobutton(self.frame_radio_buttons, text="Level 1 and 2",
+                                           variable=self.level_selection, value=1).grid(row=0, column=1, padx=50)
         self.radio_lvl_one_only = Radiobutton(self.frame_radio_buttons, text="Level 1 only",
                                               variable=self.level_selection, value=2).grid(row=0, column=2)
         self.radio_lvl_two_only = Radiobutton(self.frame_radio_buttons, text="Level 2 only",
                                               variable=self.level_selection, value=3).grid(row=0, column=3, padx=50)
 
-        self.label_result_file_title = tk.Label(self.frame_input, text='Result File Name', bd='3', fg='blue',
-                                                font='Helvetica 9 bold')
+        self.label_result_file_title = tk.Label(self.frame_input, text='Results File', bd='3', fg='blue',
+                                                font=title_font)
         self.entry_result_file = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.label_result_file_extension = tk.Label(self.frame_input, text='.xlsx', bd='3')
+        self.button_result_path = tk.Button(self.frame_input, text='Browse', command=self.browse_result_path)
 
         # place used to place the widgets in the frame
-        self.label_input_files.place(relx=0.009, rely=0.0, relheight=0.05)
+        self.label_input_files.place(relx=0.009, rely=-0.01, relheight=0.05)
 
         self.label_ref.place(relx=0.05, rely=0.06, relheight=0.035)
         self.entry_ref.place(relx=0.20, rely=0.06, relwidth=0.55, relheight=0.035)
@@ -122,30 +129,32 @@ class MainApplication:
         self.entry_main.place(relx=0.20, rely=0.22, relwidth=0.55, relheight=0.035)
         self.button_main.place(relx=0.80, rely=0.22, relheight=0.030)
 
-        self.label_indels_title.place(relx=0.009, rely=0.30, relheight=0.05)
+        self.label_indels_title.place(relx=0.009, rely=0.28, relheight=0.05)
 
-        self.label_insertions.place(relx=0.03, rely=0.36, relheight=0.035)
-        self.entry_insertions.place(relx=0.20, rely=0.36, relwidth=0.55, relheight=0.035)
+        self.label_insertions.place(relx=0.03, rely=0.34, relheight=0.035)
+        self.entry_insertions.place(relx=0.20, rely=0.34, relwidth=0.55, relheight=0.035)
 
-        self.label_deletions.place(relx=0.03, rely=0.44, relheight=0.035)
-        self.entry_deletions.place(relx=0.20, rely=0.44, relwidth=0.55, relheight=0.035)
+        self.label_deletions.place(relx=0.03, rely=0.40, relheight=0.035)
+        self.entry_deletions.place(relx=0.20, rely=0.40, relwidth=0.55, relheight=0.035)
 
-        self.label_indels_helper.place(relx=0.07, rely=0.48, relheight=0.035)
+        self.label_indels_helper.place(relx=0.07, rely=0.44, relheight=0.035)
 
-        self.label_indels_or.place(relx=0.20, rely=0.54, relheight=0.035)
+        self.label_indels_or.place(relx=0.20, rely=0.50, relheight=0.035)
 
-        self.label_indels_alignment.place(relx=0.0, rely=0.60, relheight=0.035)
-        self.entry_indels_alignment.place(relx=0.20, rely=0.60, relwidth=0.55, relheight=0.035)
-        self.button_indels_alignment.place(relx=0.80, rely=0.60, relheight=0.030)
+        self.label_indels_alignment.place(relx=0.0, rely=0.56, relheight=0.035)
+        self.entry_indels_alignment.place(relx=0.20, rely=0.56, relwidth=0.55, relheight=0.035)
+        self.button_indels_alignment.place(relx=0.80, rely=0.56, relheight=0.030)
 
-        self.label_indels_alignment_helper.place(relx=0.10, rely=0.64, relheight=0.035)
+        self.label_threshold_title.place(relx=0.009, rely=0.62, relheight=0.035)
+        self.entry_threshold.place(relx=0.10, rely=0.68, relwidth=0.05, relheight=0.035)
+        self.label_threshold_helper.place(relx=0.175, rely=0.68, relheight=0.035)
 
-        self.label_radio_title.place(relx=0.009, rely=0.72, relheight=0.035)
+        self.label_radio_title.place(relx=0.009, rely=0.74, relheight=0.035)
         #  Radio buttons are placed in their own frame (self.frame_radio_buttons)
 
         self.label_result_file_title.place(relx=0.009, rely=0.90, relheight=0.035)
         self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.035)
-        self.label_result_file_extension.place(relx=0.75, rely=0.955, relheight=0.035)
+        self.button_result_path.place(relx=0.80, rely=0.955, relheight=0.030)
 
         ############################################################################################
         # placing the buttons below
@@ -160,7 +169,7 @@ class MainApplication:
         # all the frames are placed in their respective positions
 
         self.frame_input.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.906)
-        self.frame_radio_buttons.place(relx=0.005, rely=0.80, relwidth=1, relheight=1)
+        self.frame_radio_buttons.place(relx=0.005, rely=0.815, relwidth=1, relheight=1)
         self.frame_button.place(relx=0.005, rely=0.915, relwidth=0.99, relheight=0.08)
 
         self.frame.place(relx=0.02, rely=0.02, relwidth=0.96, relheight=0.96)
@@ -200,7 +209,10 @@ class MainApplication:
                 print("Deletion input error")
                 return
 
-        result_file = pd.ExcelWriter(self.entry_result_file.get() + ".xlsx")  # Validate this, maybe regex
+        if not init_threshold(self.entry_threshold.get().strip()):
+            print("Minimum peptide length input error: minimum length set to 1")
+
+        result_file = generate_result_file(self.entry_result_file.get())
 
         main_dictionary = create_main_comparison_dict(main_raw.to_dict('split'))
         ref_dictionary = create_test_comparison_dict(ref_raw.to_dict('split'), REF_FILE_NAME)
@@ -246,37 +258,38 @@ class MainApplication:
 
         result_file.save()
 
-        showinfo("CAVES", "Comparison Complete!")
         print("Compared")
+        showinfo("CAVES", "Comparison Complete!")
 
     def browse_ref(self):
-        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("CSV files", "*.csv*"),
-                                                                                                ("all files", "*.*")))
+        filename = filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])
         self.entry_ref.delete(0, tk.END)
         self.entry_ref.insert(0, filename)
 
     def browse_test(self):
-        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("CSV files", "*.csv*"),
-                                                                                                ("all files", "*.*")))
+        filename = filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])
         self.entry_test.delete(0, tk.END)
         self.entry_test.insert(0, filename)
 
     def browse_main(self):
-        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("CSV files", "*.csv*"),
-                                                                                                ("all files", "*.*")))
+        filename = filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])
         self.entry_main.delete(0, tk.END)
         self.entry_main.insert(0, filename)
 
     def browse_alignment(self):
-        filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=(("FASTA files",
-                                                                                                 "*.fasta*"),
-                                                                                                ("all files", "*.*")))
+        fasta_exts = [("FASTA files", "*.fasta"), ("FASTA files", "*.fna"), ("FASTA files", "*.ffn"),
+                      ("FASTA files", "*.faa"), ("FASTA files", "*.frn"), ("FASTA files", "*.fa"),
+                      ("FASTA files", "*.fsa")]
+        filename = filedialog.askopenfilename(title="Select a File", filetypes=fasta_exts)
         self.entry_indels_alignment.delete(0, tk.END)
         self.entry_indels_alignment.insert(0, filename)
 
-    # This function is just a test function assigned to buttons which don't have a specific function
-    def nothing(self):
-        print("I am working perfectly")
+    def browse_result_path(self):
+        time = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        filename = filedialog.asksaveasfilename(initialfile="results_"+time, title="Results File",
+                                                filetypes=[("Excel files", "*.xlsx")])
+        self.entry_result_file.delete(0, tk.END)
+        self.entry_result_file.insert(0, filename)
 
 
 class ResultSheetObject:
@@ -462,39 +475,40 @@ def init_alignment(file_path):
         print("Unable to find alignment file from path: " + file_path)
         return False
 
-    # try:
-    with open(file_path) as my_file:
-        sequences = build_sequences(my_file)
+    try:
+        with open(file_path) as my_file:
+            sequences = build_sequences(my_file)
 
-        indelResults = find_indels(sequences["ref"], sequences["test"])
-        print("Insertions", indelResults["insertions"], "Deletions", indelResults["deletions"])
-        global INSERTIONS
-        INSERTIONS = indelResults["insertions"]
-        global DELETIONS
-        DELETIONS = indelResults["deletions"]
+            indelResults = find_indels(sequences["ref"], sequences["test"])
+            print("Insertions", indelResults["insertions"], "Deletions", indelResults["deletions"])
+            global INSERTIONS
+            INSERTIONS = indelResults["insertions"]
+            global DELETIONS
+            DELETIONS = indelResults["deletions"]
 
-        if indelResults["inFrameshifts"] or indelResults["delFrameshifts"]:
-            newWindow = Toplevel(window)
-            newWindow.title("Warning")
-            text = Text(newWindow)
-            text.insert(INSERT,
-                        "TOOL found one or more frameshift mutations in the pairwise alignment file provided "
-                        "(listed below). Epitopes predicted from these sequences will not produce biologically "
-                        "relevant matches when compared due to inherent differences in amino acids caused by the "
-                        "frameshifted sequence. TOOL will still run but we do not suggest using these results.")
+            if indelResults["inFrameshifts"] or indelResults["delFrameshifts"]:
+                newWindow = Toplevel(window)
+                newWindow.title("Warning")
+                text = Text(newWindow)
+                text.insert(INSERT,
+                            "TOOL found one or more frameshift mutations in the pairwise alignment file provided "
+                            "(listed below). Epitopes predicted from these sequences will not produce biologically "
+                            "relevant matches when compared due to inherent differences in amino acids caused by the "
+                            "frameshifted sequence. TOOL will still run but we do not suggest using these results.")
 
-            frameshift_table = generate_frameshift_table(indelResults["inFrameshifts"],
-                                                         indelResults["delFrameshifts"])
-            text.insert(INSERT, "\n\n\n\n\n" + frameshift_table)
-            text.pack(expand=0, fill=BOTH)
+                frameshift_table = generate_frameshift_table(indelResults["inFrameshifts"],
+                                                             indelResults["delFrameshifts"])
+                text.insert(INSERT, "\n\n\n\n\n" + frameshift_table)
+                text.pack(expand=0, fill=BOTH)
 
-            # adding a tag to a part of text specifying the indices
-            text.tag_add("bold1", "1.23", "1.43")
-            text.tag_add("bold2", "1.149", "1.186")
-            bold_font = Font(family="Helvetica", size=10, weight="bold")
-            text.tag_config("bold1", font=bold_font)
-            text.tag_config("bold2", font=bold_font)
-    # except:
+                # adding a tag to a part of text specifying the indices
+                text.tag_add("bold1", "1.23", "1.43")
+                text.tag_add("bold2", "1.149", "1.186")
+                bold_font = Font(family="Calibri", size=10, weight="bold")
+                text.tag_config("bold1", font=bold_font)
+                text.tag_config("bold2", font=bold_font)
+    except:
+        print("Alignment file processing error")
 
     return True
 
@@ -595,60 +609,100 @@ def generate_frameshift_table(in_frameshifts, del_frameshifts):
     result = "Nucleotide position | # of ins/dels | Insertion/Deletion | Sequence in File\n"
     for key, value in in_frameshifts.items():
         nucleotideString = str(key)
-        while len(nucleotideString) < 20:
+        while len(nucleotideString) < 33:
             nucleotideString += " "
-        result += nucleotideString + "| " + str(value) + "             | Insertion          | 1\n"
+        result += nucleotideString + "| " + str(value) + "                      | Insertion                 | 1\n"
 
     for key, value in del_frameshifts.items():
         nucleotideString = str(key)
-        while len(nucleotideString) < 20:
+        while len(nucleotideString) < 33:
             nucleotideString += " "
-        result += nucleotideString + "| " + str(value) + "             | Deletion           | 2\n"
+        result += nucleotideString + "| " + str(value) + "                      | Deletion                  | 2\n"
 
     return result
+
+
+def init_threshold(threshold_entry):
+    global THRESHOLD
+    if not threshold_entry:
+        THRESHOLD = 1
+        return True
+    try:
+        if not str.isdigit(threshold_entry):
+            raise
+        THRESHOLD = int(threshold_entry)
+    except:
+        THRESHOLD = 1
+        return False
+    return True
+
+
+def generate_result_file(file_path):
+    try:
+        filename, file_extension = path.splitext(file_path)
+        if file_extension and file_extension == ".xlsx":
+            result_file = pd.ExcelWriter(file_path)
+        else:
+            result_file = pd.ExcelWriter(filename + ".xlsx")
+    except:
+        time = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        print("Results file input error: Default file name used "
+              "(" + "results_" + time + ".xlsx). File placed in directory with CAVES executable.")
+        result_file = pd.ExcelWriter("results_" + time + ".xlsx")
+    return result_file
 
 
 def create_main_comparison_dict(main_dict_raw):
     main_list = list(main_dict_raw['data'])
     result_dict = {}
-    max_length = 0
     for item in main_list:
-        # print(item[0] + " - " + str(item[1]))
-        split = item[0].split(" ")
-        suffix = ""
-        length = len(split[0])
-        if len(split) > 1:
-            suffix = " " + split[1] + " " + split[2]
-
-        max_length = length if length > max_length else max_length
-        new_peptide = PeptideObject("main.csv", split[0], item[1], item[1]+length-1, length, suffix)
-        if item[1] not in result_dict:
-            result_dict[item[1]] = [new_peptide]
+        if type(item[0]) is int:
+            result_dict = main_comparison_dict_insert(item[0], item[1], result_dict)
         else:
-            result_dict[item[1]].append(new_peptide)
-
-    global MAIN_PEPTIDE_MAX_LENGTH
-    MAIN_PEPTIDE_MAX_LENGTH = max_length
+            result_dict = main_comparison_dict_insert(item[1], item[0], result_dict)
     return result_dict
+
+
+def main_comparison_dict_insert(start, pep, res_dict):
+    split = pep.split(" ")
+    suffix = ""
+    length = len(split[0])
+    if len(split) > 1:
+        suffix = " " + split[1] + " " + split[2]
+
+    new_peptide = PeptideObject("main.csv", split[0], start, start + length - 1, length, suffix)
+    if start not in res_dict:
+        res_dict[start] = [new_peptide]
+    else:
+        res_dict[start].append(new_peptide)
+    global MAIN_PEPTIDE_MAX_LENGTH
+    MAIN_PEPTIDE_MAX_LENGTH = max(length, MAIN_PEPTIDE_MAX_LENGTH)
+    return res_dict
 
 
 def create_test_comparison_dict(sample_dict_raw, test_file_name):
     sample_list = list(sample_dict_raw['data'])
     result_dict = {}
-    max_length = 0
 
     for item in sample_list:
-        # print(str(item[0]) + " - " + str(item[1]))
-        max_length = len(item[1]) if len(item[1]) > max_length else max_length
-        result_dict[item[0]] = PeptideObject(test_file_name, item[1], item[0], item[0]+len(item[1])-1, len(item[1]), "")
-
-    if test_file_name == REF_FILE_NAME:
-        global REF_PEPTIDE_MAX_LENGTH
-        REF_PEPTIDE_MAX_LENGTH = max_length
-    else:
-        global TEST_PEPTIDE_MAX_LENGTH
-        TEST_PEPTIDE_MAX_LENGTH = max_length
+        if type(item[0]) is int:
+            result_dict = test_comparison_dict_insert(item[0], item[1], test_file_name, result_dict)
+        else:
+            result_dict = test_comparison_dict_insert(item[1], item[0], test_file_name, result_dict)
     return result_dict
+
+
+def test_comparison_dict_insert(start, pep, test_file_name, res_dict):
+    global THRESHOLD
+    if len(pep) >= THRESHOLD:
+        res_dict[start] = PeptideObject(test_file_name, pep, start, start + len(pep) - 1, len(pep), "")
+        if test_file_name == REF_FILE_NAME:
+            global REF_PEPTIDE_MAX_LENGTH
+            REF_PEPTIDE_MAX_LENGTH = max(len(pep), REF_PEPTIDE_MAX_LENGTH)
+        else:
+            global TEST_PEPTIDE_MAX_LENGTH
+            TEST_PEPTIDE_MAX_LENGTH = max(len(pep), TEST_PEPTIDE_MAX_LENGTH)
+    return res_dict
 
 
 def align_to_test_position(ref_position):
@@ -739,27 +793,6 @@ def insert_level_one_obj(lvl_one_dict, curr_pep):
     return False
 
 
-def is_in_result_list(obj, ref, test):
-    result = False
-    if ref.peptide in obj.peptide_one:
-        indexs = []
-        index_pos = 0
-        while True:
-            try:
-                index_pos = obj.peptide_one.index(ref.peptide, index_pos)
-                indexs.append(index_pos)
-                index_pos += 1
-            except ValueError as e:
-                break
-        for ind in indexs:
-            if ref.peptide == obj.peptide_one[ind] and ref.origin_file == obj.origin_file_one[ind] \
-                    and test.peptide == obj.peptide_two[ind] and test.origin_file == obj.origin_file_two[ind]:
-                result = True
-                break
-
-    return result
-
-
 def insert_matched(result_obj, pep_one, pep_two):
     result_obj.origin_file_one.append(pep_one.origin_file + pep_one.suffix)
     result_obj.peptide_one.append(pep_one.peptide)
@@ -839,18 +872,16 @@ def input_test_comparison_result(curr_pep, results):
             result_obj = get_result_object("matched", "", 1)
             for match in results["matched"]:
                 insert_level_one_obj(L1_matched_dict, match)
-                if not is_in_result_list(result_obj, curr_pep, match):
-                    insert_matched(result_obj, curr_pep, match)
+                insert_matched(result_obj, curr_pep, match)
         if "partial" in results:
             insert_level_one_obj(L1_partial_dict, curr_pep)
             result_obj = get_result_object("partial", "", 1)
             for partial in results["partial"]:
                 insert_level_one_obj(L1_partial_dict, partial[0])
-                if not is_in_result_list(result_obj, curr_pep, partial[0]):
-                    insert_partial(result_obj, curr_pep, partial)
+                insert_partial(result_obj, curr_pep, partial)
 
 
-def calculate_main_comparison_parameters(test_peptide, aligned_start, aligned_end, main_peptide):
+def calculate_main_comparison_parameters(test_peptide, aligned_start, main_peptide):
     result = {}
     if test_peptide.origin_file == TEST_FILE_NAME:
         if aligned_start > main_peptide.start:
@@ -925,7 +956,7 @@ def compare_to_main_string(test_peptide, aligned_start, aligned_end, main_peptid
     novel_positions = {}
     matched_positions = {}
 
-    comp_params = calculate_main_comparison_parameters(test_peptide, aligned_start, aligned_end, main_peptide)
+    comp_params = calculate_main_comparison_parameters(test_peptide, aligned_start, main_peptide)
 
     test_curr = comp_params["test_start"] - test_peptide.start
     main_curr = comp_params["main_start"] - main_peptide.start
@@ -1041,7 +1072,6 @@ def generate_main_comparisons(dictionary, test_peptide):
 
 
 def calculate_input_novel_test_peps(test_dict):
-    # VERIFY
     for key, value in sorted(test_dict.items()):
         matched = False
         if key in L1_matched_dict:
@@ -1085,6 +1115,9 @@ def generate_test_comparison_results(ref_dict, test_dict):
 if __name__ == '__main__':
 
     window = tk.Tk()
+    font = Font(family="Calibri", size=10)
+    window.option_add("*Font", font)
+
     window.title("CAVES")
     app = MainApplication(window)
     window.mainloop()

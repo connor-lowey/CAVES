@@ -22,7 +22,8 @@ else:
 
 REF_FILE_NAME = ""
 TEST_FILE_NAME = ""
-MAIN_FILE_NAME = ""
+MAIN_FILE_ONE_NAME = ""
+MAIN_FILE_TWO_NAME = ""
 
 INSERTIONS = []
 DELETIONS = []  # 69 70 144
@@ -45,7 +46,7 @@ class MainApplication:
 
     def __init__(self, master):
         self.master = master
-        self.canvas = tk.Canvas(master, width=550, height=690)  # width=450, height=500)
+        self.canvas = tk.Canvas(master, width=550, height=800)  # width=550, height=690
         # to make a frame
         self.frame = tk.Frame(master, bg='white')
 
@@ -57,17 +58,20 @@ class MainApplication:
 
         self.frame_input = tk.Frame(self.frame, bd='10', padx=3, pady=3)
         self.label_input_files = tk.Label(self.frame_input, text='Input File Paths', bd='3', fg='blue', font=title_font)
-        self.label_ref = tk.Label(self.frame_input, text='Ref', bd='3')
-        self.label_test = tk.Label(self.frame_input, text='Test', bd='3')
-        self.label_main = tk.Label(self.frame_input, text='Main', bd='3')
+        self.label_ref = tk.Label(self.frame_input, text='Sequence A', bd='3')
+        self.label_test = tk.Label(self.frame_input, text='Sequence B', bd='3')
+        self.label_main_one = tk.Label(self.frame_input, text='Sequence A', bd='3')
+        self.label_main_two = tk.Label(self.frame_input, text='Sequence B', bd='3')
 
         self.entry_ref = tk.Entry(self.frame_input, bd='3', justify="center")
         self.entry_test = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.entry_main = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.entry_main_one = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.entry_main_two = tk.Entry(self.frame_input, bd='3', justify="center")
 
         self.button_ref = tk.Button(self.frame_input, text='Browse', command=self.browse_ref)
         self.button_test = tk.Button(self.frame_input, text='Browse', command=self.browse_test)
-        self.button_main = tk.Button(self.frame_input, text='Browse', command=self.browse_main)
+        self.button_main_one = tk.Button(self.frame_input, text='Browse', command=self.browse_main_one)
+        self.button_main_two = tk.Button(self.frame_input, text='Browse', command=self.browse_main_two)
 
         self.label_indels_title = tk.Label(self.frame_input, text='Insertions and Deletions', bd='3', fg='blue',
                                            font=title_font)
@@ -93,7 +97,7 @@ class MainApplication:
                                               font=title_font)
         self.entry_threshold = tk.Entry(self.frame_input, bd='3', justify="center")
         self.label_threshold_helper = tk.Label(self.frame_input,
-                                               text='Default minimum peptide length is 1',
+                                               text='Default minimum is 1 amino acid',
                                                bd='3', fg='red')
 
         self.label_radio_title = tk.Label(self.frame_input, text='Level Selection to Run', bd='3', fg='blue',
@@ -117,50 +121,56 @@ class MainApplication:
         # place used to place the widgets in the frame
         self.label_input_files.place(relx=0.009, rely=-0.01, relheight=0.05)
 
-        self.label_ref.place(relx=0.05, rely=0.06, relheight=0.035)
-        self.entry_ref.place(relx=0.20, rely=0.06, relwidth=0.55, relheight=0.035)
-        self.button_ref.place(relx=0.80, rely=0.06, relheight=0.030)
+        self.label_ref.place(relx=0.05, rely=0.06, relheight=0.030)
+        self.entry_ref.place(relx=0.20, rely=0.06, relwidth=0.55, relheight=0.030)
+        self.button_ref.place(relx=0.80, rely=0.06, relheight=0.025)
 
-        self.label_test.place(relx=0.05, rely=0.14, relheight=0.035)
-        self.entry_test.place(relx=0.20, rely=0.14, relwidth=0.55, relheight=0.035)
-        self.button_test.place(relx=0.80, rely=0.14, relheight=0.030)
+        self.label_test.place(relx=0.05, rely=0.12, relheight=0.030)
+        self.entry_test.place(relx=0.20, rely=0.12, relwidth=0.55, relheight=0.030)
+        self.button_test.place(relx=0.80, rely=0.12, relheight=0.025)
 
-        self.label_main.place(relx=0.05, rely=0.22, relheight=0.035)
-        self.entry_main.place(relx=0.20, rely=0.22, relwidth=0.55, relheight=0.035)
-        self.button_main.place(relx=0.80, rely=0.22, relheight=0.030)
+        self.label_main_one.place(relx=0.05, rely=0.18, relheight=0.030)
+        self.entry_main_one.place(relx=0.20, rely=0.18, relwidth=0.55, relheight=0.030)
+        self.button_main_one.place(relx=0.80, rely=0.18, relheight=0.025)
 
-        self.label_indels_title.place(relx=0.009, rely=0.28, relheight=0.05)
+        self.label_main_two.place(relx=0.05, rely=0.24, relheight=0.030)
+        self.entry_main_two.place(relx=0.20, rely=0.24, relwidth=0.55, relheight=0.030)
+        self.button_main_two.place(relx=0.80, rely=0.24, relheight=0.025)
 
-        self.label_insertions.place(relx=0.03, rely=0.34, relheight=0.035)
-        self.entry_insertions.place(relx=0.20, rely=0.34, relwidth=0.55, relheight=0.035)
+        self.label_indels_title.place(relx=0.009, rely=0.30, relheight=0.05)
 
-        self.label_deletions.place(relx=0.03, rely=0.40, relheight=0.035)
-        self.entry_deletions.place(relx=0.20, rely=0.40, relwidth=0.55, relheight=0.035)
+        self.label_insertions.place(relx=0.03, rely=0.36, relheight=0.030)
+        self.entry_insertions.place(relx=0.20, rely=0.36, relwidth=0.55, relheight=0.030)
 
-        self.label_indels_helper.place(relx=0.07, rely=0.44, relheight=0.035)
+        self.label_deletions.place(relx=0.03, rely=0.42, relheight=0.030)
+        self.entry_deletions.place(relx=0.20, rely=0.42, relwidth=0.55, relheight=0.030)
 
-        self.label_indels_or.place(relx=0.20, rely=0.50, relheight=0.035)
+        self.label_indels_helper.place(relx=0.07, rely=0.46, relheight=0.030)
 
-        self.label_indels_alignment.place(relx=0.0, rely=0.56, relheight=0.035)
-        self.entry_indels_alignment.place(relx=0.20, rely=0.56, relwidth=0.55, relheight=0.035)
-        self.button_indels_alignment.place(relx=0.80, rely=0.56, relheight=0.030)
+        self.label_indels_or.place(relx=0.20, rely=0.52, relheight=0.030)
 
-        self.label_threshold_title.place(relx=0.009, rely=0.62, relheight=0.035)
-        self.entry_threshold.place(relx=0.10, rely=0.68, relwidth=0.05, relheight=0.035)
-        self.label_threshold_helper.place(relx=0.175, rely=0.68, relheight=0.035)
+        self.label_indels_alignment.place(relx=0.0, rely=0.58, relheight=0.030)
+        self.entry_indels_alignment.place(relx=0.20, rely=0.58, relwidth=0.55, relheight=0.030)
+        self.button_indels_alignment.place(relx=0.80, rely=0.58, relheight=0.025)
 
-        self.label_radio_title.place(relx=0.009, rely=0.74, relheight=0.035)
+        self.label_threshold_title.place(relx=0.009, rely=0.64, relheight=0.05)
+        self.entry_threshold.place(relx=0.10, rely=0.70, relwidth=0.05, relheight=0.030)
+        self.label_threshold_helper.place(relx=0.175, rely=0.70, relheight=0.030)
+
+        self.label_radio_title.place(relx=0.009, rely=0.76, relheight=0.05)
         #  Radio buttons are placed in their own frame (self.frame_radio_buttons)
 
-        self.label_result_file_title.place(relx=0.009, rely=0.90, relheight=0.035)
-        self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.035)
-        self.button_result_path.place(relx=0.80, rely=0.955, relheight=0.030)
+        self.label_result_file_title.place(relx=0.009, rely=0.90, relheight=0.030)
+        self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.030)
+        self.button_result_path.place(relx=0.80, rely=0.955, relheight=0.025)
 
         ############################################################################################
         # placing the buttons below
+        submit_font = Font(family="Calibri", size=12)
+
         self.frame_button = tk.Frame(self.frame, bd='3', padx=3, pady=3)
-        self.button_start = tk.Button(self.frame_button, text='Compare', command=self.start_clicked)
-        self.button_cancel = tk.Button(self.frame_button, text='Cancel', command=master.destroy)
+        self.button_start = tk.Button(self.frame_button, text='Compare', font=submit_font, command=self.start_clicked)
+        self.button_cancel = tk.Button(self.frame_button, text='Cancel', font=submit_font, command=master.destroy)
 
         self.button_cancel.place(relx=0.6, rely=0.22, relheight=0.6, relwidth=0.18)
         self.button_start.place(relx=0.8, rely=0.22, relheight=0.6, relwidth=0.18)
@@ -169,7 +179,7 @@ class MainApplication:
         # all the frames are placed in their respective positions
 
         self.frame_input.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.906)
-        self.frame_radio_buttons.place(relx=0.005, rely=0.815, relwidth=1, relheight=1)
+        self.frame_radio_buttons.place(relx=0.005, rely=0.8275, relwidth=1, relheight=1)
         self.frame_button.place(relx=0.005, rely=0.915, relwidth=0.99, relheight=0.08)
 
         self.frame.place(relx=0.02, rely=0.02, relwidth=0.96, relheight=0.96)
@@ -190,11 +200,22 @@ class MainApplication:
         if test_raw is None:
             print("Unable to read test file")
             return
-        print("Reading main file")
-        main_raw = init_main_raw(self.entry_main.get().strip())
-        if main_raw is None:
-            print("Unable to read main file")
+
+        print("Reading main file one")
+        main_raw_one = init_main_raw(self.entry_main_one.get().strip())
+        if main_raw_one is None:
+            print("Unable to read main file one")
             return
+        global MAIN_FILE_ONE_NAME
+        MAIN_FILE_ONE_NAME = self.entry_main_one.get().split("/").pop()
+
+        print("Reading main file two")
+        main_raw_two = init_main_raw(self.entry_main_two.get().strip())
+        if main_raw_two is None:
+            print("Unable to read main file two")
+            return
+        global MAIN_FILE_TWO_NAME
+        MAIN_FILE_TWO_NAME = self.entry_main_two.get().split("/").pop()
 
         if self.entry_indels_alignment.get().strip() != "":
             print("Reading alignment file")
@@ -214,15 +235,17 @@ class MainApplication:
 
         result_file = generate_result_file(self.entry_result_file.get())
 
-        main_dictionary = create_main_comparison_dict(main_raw.to_dict('split'))
+        main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
+        main_dict_two = create_main_comparison_dict(main_raw_two.to_dict('split'), MAIN_FILE_TWO_NAME)
+
         ref_dictionary = create_test_comparison_dict(ref_raw.to_dict('split'), REF_FILE_NAME)
         test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
 
         generate_test_comparison_results(ref_dictionary, test_dictionary)
 
-        generate_main_comparison_results(L1_matched_dict, main_dictionary, "L1m")
-        generate_main_comparison_results(L1_partial_dict, main_dictionary, "L1p")
-        generate_main_comparison_results(L1_novel_dict, main_dictionary, "L1n")
+        generate_main_comparison_results(L1_matched_dict, main_dict_one, main_dict_two, "L1m")
+        generate_main_comparison_results(L1_partial_dict, main_dict_one, main_dict_two, "L1p")
+        generate_main_comparison_results(L1_novel_dict, main_dict_one, main_dict_two, "L1n")
 
         L1m_df = create_match_df(L1_matched)
         L1p_df = create_partial_df(L1_partial)
@@ -271,10 +294,15 @@ class MainApplication:
         self.entry_test.delete(0, tk.END)
         self.entry_test.insert(0, filename)
 
-    def browse_main(self):
+    def browse_main_one(self):
         filename = filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])
-        self.entry_main.delete(0, tk.END)
-        self.entry_main.insert(0, filename)
+        self.entry_main_one.delete(0, tk.END)
+        self.entry_main_one.insert(0, filename)
+
+    def browse_main_two(self):
+        filename = filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])
+        self.entry_main_two.delete(0, tk.END)
+        self.entry_main_two.insert(0, filename)
 
     def browse_alignment(self):
         fasta_exts = [("FASTA files", "*.fasta"), ("FASTA files", "*.fna"), ("FASTA files", "*.ffn"),
@@ -459,9 +487,6 @@ def init_main_raw(file_path):
     if not path.exists(file_path):
         print("Unable to find main file: " + file_path)
         return None
-
-    global MAIN_FILE_NAME
-    MAIN_FILE_NAME = file_path.strip().split("/").pop()  # gives last item in list which is file
 
     try:
         main_raw = pd.read_csv(file_path, index_col=False, skiprows=1, usecols={"Description", "Starting Position"})
@@ -652,25 +677,25 @@ def generate_result_file(file_path):
     return result_file
 
 
-def create_main_comparison_dict(main_dict_raw):
+def create_main_comparison_dict(main_dict_raw, main_file_name):
     main_list = list(main_dict_raw['data'])
     result_dict = {}
     for item in main_list:
         if type(item[0]) is int:
-            result_dict = main_comparison_dict_insert(item[0], item[1], result_dict)
+            result_dict = main_comparison_dict_insert(item[0], item[1], main_file_name, result_dict)
         else:
-            result_dict = main_comparison_dict_insert(item[1], item[0], result_dict)
+            result_dict = main_comparison_dict_insert(item[1], item[0], main_file_name, result_dict)
     return result_dict
 
 
-def main_comparison_dict_insert(start, pep, res_dict):
+def main_comparison_dict_insert(start, pep, main_file_name, res_dict):
     split = pep.split(" ")
     suffix = ""
     length = len(split[0])
     if len(split) > 1:
         suffix = " " + split[1] + " " + split[2]
 
-    new_peptide = PeptideObject("main.csv", split[0], start, start + length - 1, length, suffix)
+    new_peptide = PeptideObject(main_file_name, split[0], start, start + length - 1, length, suffix)
     if start not in res_dict:
         res_dict[start] = [new_peptide]
     else:
@@ -1095,10 +1120,13 @@ def calculate_input_novel_test_peps(test_dict):
             insert_novel(res_obj, value)
 
 
-def generate_main_comparison_results(test_dict, main_dict, input_name):
+def generate_main_comparison_results(test_dict, main_dict_one, main_dict_two, input_name):
     for key, value in sorted(test_dict.items()):
         for pep in value:
-            results = generate_main_comparisons(main_dict, pep)
+            if pep.origin_file == REF_FILE_NAME:
+                results = generate_main_comparisons(main_dict_one, pep)
+            else:  # pep.origin_file == TEST_FILE_NAME
+                results = generate_main_comparisons(main_dict_two, pep)
             input_main_comparison_result(pep, results, input_name)
 
 

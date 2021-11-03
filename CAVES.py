@@ -29,7 +29,7 @@ INSERTIONS = []
 DELETIONS = []  # 69 70 144
 
 THRESHOLD = 1
-LVL_SEL = 1
+LVL_SEL = "L1&L2"
 
 PEP_COLUMNS = ["peptide", "Peptide", "Peptide sequence"]
 START_COLUMNS = ["start", "Start", "Peptide start"]
@@ -242,19 +242,19 @@ class MainApplication:
         L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
         L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
 
-        L1m_df.to_excel(result_file, sheet_name="L1M", index=False)
+        L1m_df.to_excel(result_file, sheet_name="L1E", index=False)
         L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
         L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
 
-        L1m_L2m_df.to_excel(result_file, sheet_name="L1M_L2M", index=False)
-        L1m_L2p_df.to_excel(result_file, sheet_name="L1M_L2P", index=False)
-        L1m_L2n_df.to_excel(result_file, sheet_name="L1M_L2N", index=False)
+        L1m_L2m_df.to_excel(result_file, sheet_name="L1E_L2E", index=False)
+        L1m_L2p_df.to_excel(result_file, sheet_name="L1E_L2P", index=False)
+        L1m_L2n_df.to_excel(result_file, sheet_name="L1E_L2N", index=False)
 
-        L1p_L2m_df.to_excel(result_file, sheet_name="L1P_L2M", index=False)
+        L1p_L2m_df.to_excel(result_file, sheet_name="L1P_L2E", index=False)
         L1p_L2p_df.to_excel(result_file, sheet_name="L1P_L2P", index=False)
         L1p_L2n_df.to_excel(result_file, sheet_name="L1P_L2N", index=False)
 
-        L1n_L2m_df.to_excel(result_file, sheet_name="L1N_L2M", index=False)
+        L1n_L2m_df.to_excel(result_file, sheet_name="L1N_L2E", index=False)
         L1n_L2p_df.to_excel(result_file, sheet_name="L1N_L2P", index=False)
         L1n_L2n_df.to_excel(result_file, sheet_name="L1N_L2N", index=False)
 
@@ -392,9 +392,14 @@ def init_objects(lvl_sel):
     DELETIONS = []
 
     global LVL_SEL
-    LVL_SEL = lvl_sel
+    if lvl_sel == 1:
+        LVL_SEL = "L1&L2"
+    elif lvl_sel == 2:
+        LVL_SEL = "L1Only"
+    else:
+        LVL_SEL = "L2Only"
 
-    if lvl_sel == 1 or lvl_sel == 2:
+    if LVL_SEL == "L1&L2" or LVL_SEL == "L1Only":
         global L1_novel
         L1_novel = ResultSheetObject()
         global L1_partial
@@ -402,7 +407,7 @@ def init_objects(lvl_sel):
         global L1_matched
         L1_matched = ResultSheetObject()
 
-    if lvl_sel == 3:
+    if LVL_SEL == "L2Only":
         global L2_novel
         L2_novel = ResultSheetObject()
         global L2_partial
@@ -410,7 +415,7 @@ def init_objects(lvl_sel):
         global L2_matched
         L2_matched = ResultSheetObject()
 
-    if lvl_sel == 1:
+    if LVL_SEL == "L1&L2":
         global L1_novel_L2_novel
         L1_novel_L2_novel = ResultSheetObject()
         global L1_novel_L2_partial
@@ -503,6 +508,19 @@ def init_alignment(file_path):
         print("Unable to find alignment file from path: " + file_path)
         return False
 
+    result = False
+    global LVL_SEL
+    if LVL_SEL == "L1&L2":
+        result = init_L1L2_indels(file_path)
+    if LVL_SEL == "L1Only":
+        print("Level 2")
+    else:  # LVL_SEL == "L2Only"
+        print("Level 3")
+
+    return result
+
+
+def init_L1L2_indels(file_path):
     try:
         with open(file_path) as my_file:
             sequences = build_sequences(my_file)
@@ -513,83 +531,24 @@ def init_alignment(file_path):
             INSERTIONS = indelResults["insertions"]
             global DELETIONS
             DELETIONS = indelResults["deletions"]
-
-            if indelResults["inFrameshifts"] or indelResults["delFrameshifts"]:
-                newWindow = Toplevel(window)
-                newWindow.title("Warning")
-                text = Text(newWindow)
-                text.insert(INSERT,
-                            "TOOL found one or more frameshift mutations in the pairwise alignment file provided "
-                            "(listed below). Epitopes predicted from these sequences will not produce biologically "
-                            "relevant matches when compared due to inherent differences in amino acids caused by the "
-                            "frameshifted sequence. TOOL will still run but we do not suggest using these results.")
-
-                frameshift_table = generate_frameshift_table(indelResults["inFrameshifts"],
-                                                             indelResults["delFrameshifts"])
-                text.insert(INSERT, "\n\n\n\n\n" + frameshift_table)
-                text.pack(expand=0, fill=BOTH)
-
-                # adding a tag to a part of text specifying the indices
-                text.tag_add("bold1", "1.23", "1.43")
-                text.tag_add("bold2", "1.149", "1.186")
-                bold_font = Font(family="Calibri", size=10, weight="bold")
-                text.tag_config("bold1", font=bold_font)
-                text.tag_config("bold2", font=bold_font)
     except:
         print("Alignment file processing error")
-
-    return True
-
-
-def init_insertions(insertion_entry):
-    if not insertion_entry:
-        return True
-    try:
-        global INSERTIONS
-        insertions = insertion_entry.split()
-        for insertion in insertions:
-            if not str.isdigit(insertion):
-                raise
-            INSERTIONS.append(int(insertion))
-    except:
-        return False
-    return True
-
-
-def init_deletions(deletion_entry):
-    if not deletion_entry:
-        return True
-    try:
-        global DELETIONS
-        deletions = deletion_entry.split()
-        for deletion in deletions:
-            if not str.isdigit(deletion):
-                raise
-            DELETIONS.append(int(deletion))
-    except:
         return False
     return True
 
 
 def build_sequences(file):
-    results = {}
+    sequences = ["", "", ""]
 
-    refSeq = ""
-    testSeq = ""
-    refCreated = True
+    curr_seq = -1
     for line in file:
         if line[0] == ">":
-            refCreated = not refCreated
+            curr_seq += 1
         else:
             line = line.rstrip("\n")
-            if not refCreated:
-                refSeq += line
-            else:
-                testSeq += line
+            sequences[curr_seq] += line
 
-    results["ref"] = refSeq
-    results["test"] = testSeq
-    return results
+    return sequences
 
 
 def find_indels(ref_sequence, test_sequence):

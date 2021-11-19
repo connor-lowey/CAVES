@@ -28,6 +28,10 @@ MAIN_FILE_TWO_NAME = ""
 INSERTIONS = []
 DELETIONS = []  # 69 70 144
 
+SEQ_ONE_GAPS = []
+SEQ_TWO_GAPS = []
+SEQ_THREE_GAPS = []
+
 THRESHOLD = 1
 LVL_SEL = "L1&L2"
 
@@ -174,6 +178,8 @@ class MainApplication:
         print("Compare Start")
         init_objects(self.level_selection.get())
 
+        # init_alignment(self.entry_indels_alignment.get().strip())  # REMOVE ME
+
         print("Reading Ref file")
         ref_raw = init_ref_raw(self.entry_ref.get().strip())
         if ref_raw is None:
@@ -204,7 +210,7 @@ class MainApplication:
         if self.entry_indels_alignment.get().strip() != "":
             print("Reading alignment file")
             if not init_alignment(self.entry_indels_alignment.get().strip()):
-                print("Unable to create insertion and deletion lists")
+                print("Unable to create gap character lists")
                 return
         else:
             print("Empty alignment file path")
@@ -214,51 +220,33 @@ class MainApplication:
 
         result_file = generate_result_file(self.entry_result_file.get())
 
-        main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
-        main_dict_two = create_main_comparison_dict(main_raw_two.to_dict('split'), MAIN_FILE_TWO_NAME)
-
         ref_dictionary = create_test_comparison_dict(ref_raw.to_dict('split'), REF_FILE_NAME)
-        test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
 
-        generate_test_comparison_results(ref_dictionary, test_dictionary)
+        global LVL_SEL
+        if LVL_SEL == "L1&L2":
+            test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
+            main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
+            main_dict_two = create_main_comparison_dict(main_raw_two.to_dict('split'), MAIN_FILE_TWO_NAME)
 
-        generate_main_comparison_results(L1_matched_dict, main_dict_one, main_dict_two, "L1m")
-        generate_main_comparison_results(L1_partial_dict, main_dict_one, main_dict_two, "L1p")
-        generate_main_comparison_results(L1_novel_dict, main_dict_one, main_dict_two, "L1n")
+            generate_test_comparison_results(ref_dictionary, test_dictionary)
 
-        L1m_df = create_match_df(L1_matched)
-        L1p_df = create_partial_df(L1_partial)
-        L1n_df = create_novel_df(L1_novel)
+            generate_main_comparison_results(L1_matched_dict, "L1m", main_dict_one, main_dict_two)
+            generate_main_comparison_results(L1_partial_dict, "L1p", main_dict_one, main_dict_two)
+            generate_main_comparison_results(L1_novel_dict, "L1n", main_dict_one, main_dict_two)
 
-        L1m_L2m_df = create_match_df(L1_matched_L2_matched)
-        L1m_L2p_df = create_partial_df(L1_matched_L2_partial)
-        L1m_L2n_df = create_novel_df(L1_matched_L2_novel)
+            finalize_L1L2_results(result_file)
 
-        L1p_L2m_df = create_match_df(L1_partial_L2_matched)
-        L1p_L2p_df = create_partial_df(L1_partial_L2_partial)
-        L1p_L2n_df = create_novel_df(L1_partial_L2_novel)
+        if LVL_SEL == "L1Only":
+            test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
+            generate_test_comparison_results(ref_dictionary, test_dictionary)
 
-        L1n_L2m_df = create_match_df(L1_novel_L2_matched)
-        L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
-        L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
+            finalize_L1Only_results(result_file)
 
-        L1m_df.to_excel(result_file, sheet_name="L1E", index=False)
-        L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
-        L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
+        if LVL_SEL == "L2Only":
+            main_dict_one = create_main_comparison_dict(main_raw_two.to_dict('split'), MAIN_FILE_TWO_NAME)
+            generate_main_comparison_results(ref_dictionary, "L2", main_dict_one)
 
-        L1m_L2m_df.to_excel(result_file, sheet_name="L1E_L2E", index=False)
-        L1m_L2p_df.to_excel(result_file, sheet_name="L1E_L2P", index=False)
-        L1m_L2n_df.to_excel(result_file, sheet_name="L1E_L2N", index=False)
-
-        L1p_L2m_df.to_excel(result_file, sheet_name="L1P_L2E", index=False)
-        L1p_L2p_df.to_excel(result_file, sheet_name="L1P_L2P", index=False)
-        L1p_L2n_df.to_excel(result_file, sheet_name="L1P_L2N", index=False)
-
-        L1n_L2m_df.to_excel(result_file, sheet_name="L1N_L2E", index=False)
-        L1n_L2p_df.to_excel(result_file, sheet_name="L1N_L2P", index=False)
-        L1n_L2n_df.to_excel(result_file, sheet_name="L1N_L2N", index=False)
-
-        result_file.save()
+            finalize_L2Only_results(result_file)
 
         print("Compared")
         showinfo("CAVES", "Comparison Complete!")
@@ -508,29 +496,40 @@ def init_alignment(file_path):
         print("Unable to find alignment file from path: " + file_path)
         return False
 
-    result = False
-    global LVL_SEL
-    if LVL_SEL == "L1&L2":
-        result = init_L1L2_indels(file_path)
-    if LVL_SEL == "L1Only":
-        print("Level 2")
-    else:  # LVL_SEL == "L2Only"
-        print("Level 3")
+    result = init_gap_chars(file_path)
+    # global SEQ_ONE_GAPS
+    # global SEQ_TWO_GAPS
+    # global SEQ_THREE_GAPS
+    # print(SEQ_ONE_GAPS, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
 
     return result
 
 
-def init_L1L2_indels(file_path):
+def init_gap_chars(file_path):
     try:
         with open(file_path) as my_file:
             sequences = build_sequences(my_file)
 
-            indelResults = find_indels(sequences["ref"], sequences["test"])
-            print("Insertions", indelResults["insertions"], "Deletions", indelResults["deletions"])
-            global INSERTIONS
-            INSERTIONS = indelResults["insertions"]
-            global DELETIONS
-            DELETIONS = indelResults["deletions"]
+            global SEQ_ONE_GAPS
+            SEQ_ONE_GAPS = find_gap_chars(sequences[0])
+            print("Seq One Gaps ", SEQ_ONE_GAPS)
+
+            global LVL_SEL
+            if LVL_SEL != "L2Only":
+                global SEQ_TWO_GAPS
+                SEQ_TWO_GAPS = find_gap_chars(sequences[1])
+                print("Seq Two Gaps ", SEQ_TWO_GAPS)
+            if LVL_SEL != "L1Only":
+                global SEQ_THREE_GAPS
+                SEQ_THREE_GAPS = find_gap_chars(sequences[2])
+                print("Seq Three Gaps ", SEQ_THREE_GAPS)
+
+            # indelResults = find_indels(sequences["ref"], sequences["test"])
+            # print("Insertions", indelResults["insertions"], "Deletions", indelResults["deletions"])
+            # global INSERTIONS
+            # INSERTIONS = indelResults["insertions"]
+            # global DELETIONS
+            # DELETIONS = indelResults["deletions"]
     except:
         print("Alignment file processing error")
         return False
@@ -549,6 +548,17 @@ def build_sequences(file):
             sequences[curr_seq] += line
 
     return sequences
+
+
+def find_gap_chars(seq):
+    gaps = []
+    amino_acid_count = 1
+    for char in seq:
+        if char == '-':
+            gaps.append(amino_acid_count)
+        amino_acid_count += 1
+
+    return gaps
 
 
 def find_indels(ref_sequence, test_sequence):
@@ -742,6 +752,13 @@ def get_result_object(result_type, input_file, level):
         return L1_novel_L2_partial
     if result_type == "novel" and level == 2 and input_file == "L1n":
         return L1_novel_L2_novel
+
+    if result_type == "matched" and level == 2 and input_file == "L2":
+        return L2_matched
+    if result_type == "partial" and level == 2 and input_file == "L2":
+        return L2_partial
+    if result_type == "novel" and level == 2 and input_file == "L2":
+        return L2_novel
 
 
 def create_match_df(obj):
@@ -1082,7 +1099,7 @@ def calculate_input_novel_test_peps(test_dict):
             insert_novel(res_obj, value)
 
 
-def generate_main_comparison_results(test_dict, main_dict_one, main_dict_two, input_name):
+def generate_main_comparison_results(test_dict, input_name, main_dict_one, main_dict_two=None):
     for key, value in sorted(test_dict.items()):
         for pep in value:
             if pep.origin_file == REF_FILE_NAME:
@@ -1097,6 +1114,66 @@ def generate_test_comparison_results(ref_dict, test_dict):
         results = generate_test_comparisons(test_dict, value)
         input_test_comparison_result(value, results)
     calculate_input_novel_test_peps(test_dict)
+
+
+def finalize_L1L2_results(result_file):
+    L1m_df = create_match_df(L1_matched)
+    L1p_df = create_partial_df(L1_partial)
+    L1n_df = create_novel_df(L1_novel)
+
+    L1m_L2m_df = create_match_df(L1_matched_L2_matched)
+    L1m_L2p_df = create_partial_df(L1_matched_L2_partial)
+    L1m_L2n_df = create_novel_df(L1_matched_L2_novel)
+
+    L1p_L2m_df = create_match_df(L1_partial_L2_matched)
+    L1p_L2p_df = create_partial_df(L1_partial_L2_partial)
+    L1p_L2n_df = create_novel_df(L1_partial_L2_novel)
+
+    L1n_L2m_df = create_match_df(L1_novel_L2_matched)
+    L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
+    L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
+
+    L1m_df.to_excel(result_file, sheet_name="L1E", index=False)
+    L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
+    L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
+
+    L1m_L2m_df.to_excel(result_file, sheet_name="L1E_L2E", index=False)
+    L1m_L2p_df.to_excel(result_file, sheet_name="L1E_L2P", index=False)
+    L1m_L2n_df.to_excel(result_file, sheet_name="L1E_L2N", index=False)
+
+    L1p_L2m_df.to_excel(result_file, sheet_name="L1P_L2E", index=False)
+    L1p_L2p_df.to_excel(result_file, sheet_name="L1P_L2P", index=False)
+    L1p_L2n_df.to_excel(result_file, sheet_name="L1P_L2N", index=False)
+
+    L1n_L2m_df.to_excel(result_file, sheet_name="L1N_L2E", index=False)
+    L1n_L2p_df.to_excel(result_file, sheet_name="L1N_L2P", index=False)
+    L1n_L2n_df.to_excel(result_file, sheet_name="L1N_L2N", index=False)
+
+    result_file.save()
+
+
+def finalize_L1Only_results(result_file):
+    L1m_df = create_match_df(L1_matched)
+    L1p_df = create_partial_df(L1_partial)
+    L1n_df = create_novel_df(L1_novel)
+
+    L1m_df.to_excel(result_file, sheet_name="L1E", index=False)
+    L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
+    L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
+
+    result_file.save()
+
+
+def finalize_L2Only_results(result_file):
+    L2m_df = create_match_df(L2_matched)
+    L2p_df = create_partial_df(L2_partial)
+    L2n_df = create_novel_df(L2_novel)
+
+    L2m_df.to_excel(result_file, sheet_name="L2E", index=False)
+    L2p_df.to_excel(result_file, sheet_name="L2P", index=False)
+    L2n_df.to_excel(result_file, sheet_name="L2N", index=False)
+
+    result_file.save()
 
 
 # ----------------------------------------------- MAIN

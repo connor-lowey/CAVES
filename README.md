@@ -7,8 +7,8 @@ CAVES utilizes two levels of comparisons to organize putative epitopes from two 
 In both levels, epitopes are sorted into categories of **exact matches**, **partial matches**, or **novel epitopes**.
 
 # Resources
-* **Website**: github link
-* **Publication**: journal link
+* **Website**: https://github.com/connor-lowey/CAVES
+* **Publication**: Publication pending
 * **Sample dataset**: github link to folder
 
 # Installation
@@ -111,11 +111,10 @@ Results are written as a multi-sheet **.xlsx** file, labelled with the following
 L2 names will combine the L1 category used for comparison against the database epitopes, along with the L2 category produced as a result.
 * Ex. **L1E_L2E** will contain epitopes that found an exact match between sequence A and B in L1, and then found an exact match with a database epitope in L2
 
-For details on matching criteria, please refer to our publication and the associated supplementary materials: (link)
+For details on matching criteria, please refer to our publication and the associated supplementary materials: Publication pending
 
 # Legal
-Copyright XXX  
-Written by:  
+Copyright 2021 Connor Lowey   
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this work except in compliance with the License. You may obtain a copy of the License at:  
 https://www.apache.org/licenses/LICENSE-2.0 
 

@@ -31,6 +31,9 @@ DELETIONS = []  # 69 70 144
 SEQ_ONE_GAPS = []
 SEQ_TWO_GAPS = []
 SEQ_THREE_GAPS = []
+SEQ_FOUR_GAPS = []
+
+FOUR_SEQ_ALIGN = False
 
 THRESHOLD = 1
 LVL_SEL = "L1&L2"
@@ -178,6 +181,7 @@ class MainApplication:
         print("Compare Start")
         init_objects(self.level_selection.get())
 
+        global LVL_SEL
         # init_alignment(self.entry_indels_alignment.get().strip())  # REMOVE ME
 
         print("Reading Ref file")
@@ -185,27 +189,31 @@ class MainApplication:
         if ref_raw is None:
             print("Unable to read ref file")
             return
-        print("Reading Test file")
-        test_raw = init_test_raw(self.entry_test.get().strip())
-        if test_raw is None:
-            print("Unable to read test file")
-            return
 
-        print("Reading main file one")
-        main_raw_one = init_main_raw(self.entry_main_one.get().strip())
-        if main_raw_one is None:
-            print("Unable to read main file one")
-            return
-        global MAIN_FILE_ONE_NAME
-        MAIN_FILE_ONE_NAME = self.entry_main_one.get().split("/").pop()
+        if LVL_SEL != "L2Only":
+            print("Reading Test file")
+            test_raw = init_test_raw(self.entry_test.get().strip())
+            if test_raw is None:
+                print("Unable to read test file")
+                return
 
-        print("Reading main file two")
-        main_raw_two = init_main_raw(self.entry_main_two.get().strip())
-        if main_raw_two is None:
-            print("Unable to read main file two")
-            return
-        global MAIN_FILE_TWO_NAME
-        MAIN_FILE_TWO_NAME = self.entry_main_two.get().split("/").pop()
+        if LVL_SEL != "L1Only":
+            print("Reading main file one")
+            main_raw_one = init_main_raw(self.entry_main_one.get().strip())
+            if main_raw_one is None:
+                print("Unable to read main file one")
+                return
+            global MAIN_FILE_ONE_NAME
+            MAIN_FILE_ONE_NAME = self.entry_main_one.get().split("/").pop()
+
+        if LVL_SEL == "L1&L2":
+            print("Reading main file two")
+            main_raw_two = init_main_raw(self.entry_main_two.get().strip())
+            if main_raw_two is None:
+                print("Unable to read main file two")
+                return
+            global MAIN_FILE_TWO_NAME
+            MAIN_FILE_TWO_NAME = self.entry_main_two.get().split("/").pop()
 
         if self.entry_indels_alignment.get().strip() != "":
             print("Reading alignment file")
@@ -214,6 +222,7 @@ class MainApplication:
                 return
         else:
             print("Empty alignment file path")
+            return
 
         if not init_threshold(self.entry_threshold.get().strip()):
             print("Minimum peptide length input error: minimum length set to 1")
@@ -222,7 +231,6 @@ class MainApplication:
 
         ref_dictionary = create_test_comparison_dict(ref_raw.to_dict('split'), REF_FILE_NAME)
 
-        global LVL_SEL
         if LVL_SEL == "L1&L2":
             test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
             main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
@@ -379,6 +387,27 @@ def init_objects(lvl_sel):
     global DELETIONS
     DELETIONS = []
 
+    global REF_FILE_NAME
+    REF_FILE_NAME = ""
+    global TEST_FILE_NAME
+    TEST_FILE_NAME = ""
+    global MAIN_FILE_ONE_NAME
+    MAIN_FILE_ONE_NAME = ""
+    global MAIN_FILE_TWO_NAME
+    MAIN_FILE_TWO_NAME = ""
+
+    global SEQ_ONE_GAPS
+    SEQ_ONE_GAPS = []
+    global SEQ_TWO_GAPS
+    SEQ_TWO_GAPS = []
+    global SEQ_THREE_GAPS
+    SEQ_THREE_GAPS = []
+    global SEQ_FOUR_GAPS
+    SEQ_FOUR_GAPS = []
+
+    global FOUR_SEQ_ALIGN
+    FOUR_SEQ_ALIGN = False
+
     global LVL_SEL
     if lvl_sel == 1:
         LVL_SEL = "L1&L2"
@@ -497,10 +526,6 @@ def init_alignment(file_path):
         return False
 
     result = init_gap_chars(file_path)
-    # global SEQ_ONE_GAPS
-    # global SEQ_TWO_GAPS
-    # global SEQ_THREE_GAPS
-    # print(SEQ_ONE_GAPS, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
 
     return result
 
@@ -514,7 +539,6 @@ def init_gap_chars(file_path):
             SEQ_ONE_GAPS = find_gap_chars(sequences[0])
             print("Seq One Gaps ", SEQ_ONE_GAPS)
 
-            global LVL_SEL
             if LVL_SEL != "L2Only":
                 global SEQ_TWO_GAPS
                 SEQ_TWO_GAPS = find_gap_chars(sequences[1])
@@ -523,13 +547,12 @@ def init_gap_chars(file_path):
                 global SEQ_THREE_GAPS
                 SEQ_THREE_GAPS = find_gap_chars(sequences[2])
                 print("Seq Three Gaps ", SEQ_THREE_GAPS)
-
-            # indelResults = find_indels(sequences["ref"], sequences["test"])
-            # print("Insertions", indelResults["insertions"], "Deletions", indelResults["deletions"])
-            # global INSERTIONS
-            # INSERTIONS = indelResults["insertions"]
-            # global DELETIONS
-            # DELETIONS = indelResults["deletions"]
+            if sequences[3] and LVL_SEL == "L1&L2":
+                global SEQ_FOUR_GAPS
+                SEQ_FOUR_GAPS = find_gap_chars(sequences[3])
+                global FOUR_SEQ_ALIGN
+                FOUR_SEQ_ALIGN = True
+                print("Seq Four Gaps ", SEQ_FOUR_GAPS)
     except:
         print("Alignment file processing error")
         return False
@@ -537,7 +560,7 @@ def init_gap_chars(file_path):
 
 
 def build_sequences(file):
-    sequences = ["", "", ""]
+    sequences = ["", "", "", ""]
 
     curr_seq = -1
     for line in file:
@@ -702,26 +725,15 @@ def test_comparison_dict_insert(start, pep, test_file_name, res_dict):
     return res_dict
 
 
-def align_to_test_position(ref_position):
+def align_pos_gaps(ref_position, seq_one, seq_two):
     test_position = ref_position
-    for deletion in DELETIONS:
-        if ref_position > deletion:
-            test_position -= 1
-    for insertion in INSERTIONS:
-        if ref_position > insertion:
+    for gap_one in seq_one:
+        if ref_position > gap_one:
             test_position += 1
+    for gap_two in seq_two:
+        if ref_position > gap_two:
+            test_position -= 1
     return test_position
-
-
-def align_to_ref_position(test_position):
-    ref_position = test_position
-    for deletion in DELETIONS:
-        if test_position > deletion:
-            ref_position += 1
-    for insertion in INSERTIONS:
-        if test_position > insertion:
-            ref_position -= 1
-    return ref_position
 
 
 def get_result_object(result_type, input_file, level):
@@ -892,15 +904,21 @@ def calculate_main_comparison_parameters(test_peptide, aligned_start, main_pepti
             result["test_start"] = test_peptide.start
             result["main_start"] = aligned_start
         else:
-            result["test_start"] = align_to_test_position(main_peptide.start)
+            if FOUR_SEQ_ALIGN:
+                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
+            else:
+                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
+            # result["test_start"] = align_to_test_position(main_peptide.start)
             result["main_start"] = main_peptide.start
     else:
         if aligned_start > main_peptide.start:
             result["test_start"] = test_peptide.start
-            result["main_start"] = test_peptide.start
+            result["main_start"] = aligned_start
         else:
-            result["test_start"] = main_peptide.start
+            result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
+            # result["test_start"] = main_peptide.start
             result["main_start"] = main_peptide.start
+
     if main_peptide.end - result["main_start"] <= test_peptide.end - result["test_start"]:
         result["num_comp"] = main_peptide.end - result["main_start"] + 1
     else:
@@ -911,11 +929,11 @@ def calculate_main_comparison_parameters(test_peptide, aligned_start, main_pepti
 def calculate_test_comparison_parameters(ref_peptide, test_peptide):
     result = {}
 
-    if align_to_test_position(ref_peptide.start) > test_peptide.start:
+    if align_pos_gaps(ref_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS) > test_peptide.start:
         result["ref_start"] = ref_peptide.start
-        result["test_start"] = align_to_test_position(ref_peptide.start)
+        result["test_start"] = align_pos_gaps(ref_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
     else:
-        result["ref_start"] = align_to_ref_position(test_peptide.start)
+        result["ref_start"] = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_ONE_GAPS)
         result["test_start"] = test_peptide.start
     if ref_peptide.end - result["ref_start"] <= test_peptide.end - result["test_start"]:
         result["num_comp"] = ref_peptide.end - result["ref_start"] + 1
@@ -936,6 +954,7 @@ def compare_to_test_string(ref_peptide, test_peptide):
     ref_curr = comp_params["ref_start"] - ref_peptide.start
     test_curr = comp_params["test_start"] - test_peptide.start
 
+    # print(ref_peptide.peptide, test_peptide.peptide)
     for i in range(0, comp_params["num_comp"]):
         if ref_peptide.peptide[ref_curr] == test_peptide.peptide[test_curr]:
             matched_positions[comp_params["ref_start"]+i] = ref_peptide.peptide[ref_curr]
@@ -988,8 +1007,8 @@ def compare_to_main_string(test_peptide, aligned_start, aligned_end, main_peptid
 def generate_test_comparisons(dictionary, ref_peptide):
     result = {}
     comp_results = {"matched": [], "partial": [], "novel_test_peps": []}
-    aligned_test_start = align_to_test_position(ref_peptide.start)
-    aligned_test_end = align_to_test_position(ref_peptide.end)
+    aligned_test_start = align_pos_gaps(ref_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
+    aligned_test_end = align_pos_gaps(ref_peptide.end, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
 
     curr_pos = max(1, aligned_test_start-TEST_PEPTIDE_MAX_LENGTH)
 
@@ -1029,11 +1048,25 @@ def generate_test_comparisons(dictionary, ref_peptide):
 def generate_main_comparisons(dictionary, test_peptide):
     result = {}
     comp_results = {"matched": [], "partial": [], "novel_pos_dict": {}}
-    aligned_test_start = test_peptide.start
-    aligned_test_end = test_peptide.end
-    if test_peptide.origin_file == TEST_FILE_NAME:
-        aligned_test_start = align_to_ref_position(aligned_test_start)
-        aligned_test_end = align_to_ref_position(aligned_test_end)
+
+    if LVL_SEL == "L2Only":
+        aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_ONE_GAPS)
+        aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_TWO_GAPS, SEQ_ONE_GAPS)
+    else:
+        if FOUR_SEQ_ALIGN:
+            if test_peptide.origin_file != TEST_FILE_NAME:
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
+            else:
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_FOUR_GAPS, SEQ_TWO_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_FOUR_GAPS, SEQ_TWO_GAPS)
+        else:
+            if test_peptide.origin_file != TEST_FILE_NAME:
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
+            else:
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_THREE_GAPS, SEQ_TWO_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_THREE_GAPS, SEQ_TWO_GAPS)
 
     curr_pos = max(1, aligned_test_start-MAIN_PEPTIDE_MAX_LENGTH)
 

@@ -251,7 +251,7 @@ class MainApplication:
             finalize_L1Only_results(result_file)
 
         if LVL_SEL == "L2Only":
-            main_dict_one = create_main_comparison_dict(main_raw_two.to_dict('split'), MAIN_FILE_TWO_NAME)
+            main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
             generate_main_comparison_results(ref_dictionary, "L2", main_dict_one)
 
             finalize_L2Only_results(result_file)
@@ -897,26 +897,29 @@ def input_test_comparison_result(curr_pep, results):
                 insert_partial(result_obj, curr_pep, partial)
 
 
-def calculate_main_comparison_parameters(test_peptide, aligned_start, main_peptide):
+def calculate_main_comparison_parameters(test_peptide, main_peptide):
     result = {}
     if test_peptide.origin_file == TEST_FILE_NAME:
-        if aligned_start > main_peptide.start:
-            result["test_start"] = test_peptide.start
-            result["main_start"] = aligned_start
-        else:
-            if FOUR_SEQ_ALIGN:
-                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
+        if FOUR_SEQ_ALIGN:
+            if align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS) > main_peptide.start:
+                result["test_start"] = test_peptide.start
+                result["main_start"] = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
             else:
-                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
-            # result["test_start"] = align_to_test_position(main_peptide.start)
-            result["main_start"] = main_peptide.start
-    else:
-        if aligned_start > main_peptide.start:
-            result["test_start"] = test_peptide.start
-            result["main_start"] = aligned_start
+                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_FOUR_GAPS, SEQ_TWO_GAPS)
+                result["main_start"] = main_peptide.start
         else:
-            result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
-            # result["test_start"] = main_peptide.start
+            if align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS) > main_peptide.start:
+                result["test_start"] = test_peptide.start
+                result["main_start"] = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
+            else:
+                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_THREE_GAPS, SEQ_TWO_GAPS)
+                result["main_start"] = main_peptide.start
+    else:
+        if align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS) > main_peptide.start:
+            result["test_start"] = test_peptide.start
+            result["main_start"] = align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
+        else:
+            result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
             result["main_start"] = main_peptide.start
 
     if main_peptide.end - result["main_start"] <= test_peptide.end - result["test_start"]:
@@ -974,12 +977,12 @@ def compare_to_test_string(ref_peptide, test_peptide):
     return results
 
 
-def compare_to_main_string(test_peptide, aligned_start, aligned_end, main_peptide):
+def compare_to_main_string(test_peptide,  main_peptide):
     results = []
     novel_positions = {}
     matched_positions = {}
 
-    comp_params = calculate_main_comparison_parameters(test_peptide, aligned_start, main_peptide)
+    comp_params = calculate_main_comparison_parameters(test_peptide, main_peptide)
 
     test_curr = comp_params["test_start"] - test_peptide.start
     main_curr = comp_params["main_start"] - main_peptide.start
@@ -1050,23 +1053,19 @@ def generate_main_comparisons(dictionary, test_peptide):
     comp_results = {"matched": [], "partial": [], "novel_pos_dict": {}}
 
     if LVL_SEL == "L2Only":
-        aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_ONE_GAPS)
-        aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_TWO_GAPS, SEQ_ONE_GAPS)
+        aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
+        aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
     else:
-        if FOUR_SEQ_ALIGN:
-            if test_peptide.origin_file != TEST_FILE_NAME:
-                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
-                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
-            else:
-                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_FOUR_GAPS, SEQ_TWO_GAPS)
-                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_FOUR_GAPS, SEQ_TWO_GAPS)
+        if test_peptide.origin_file != TEST_FILE_NAME:
+            aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
+            aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
         else:
-            if test_peptide.origin_file != TEST_FILE_NAME:
-                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
-                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
+            if FOUR_SEQ_ALIGN:
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
             else:
-                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_THREE_GAPS, SEQ_TWO_GAPS)
-                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_THREE_GAPS, SEQ_TWO_GAPS)
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
 
     curr_pos = max(1, aligned_test_start-MAIN_PEPTIDE_MAX_LENGTH)
 
@@ -1079,7 +1078,7 @@ def generate_main_comparisons(dictionary, test_peptide):
                         ((aligned_test_start <= main_peptide.start <= aligned_test_end) or
                          (aligned_test_start <= main_peptide.end <= aligned_test_end)):
                     comparison = \
-                        compare_to_main_string(test_peptide, aligned_test_start, aligned_test_end, main_peptide)
+                        compare_to_main_string(test_peptide, main_peptide)
                     if comparison[0] == "matched":
                         comp_results["matched"].append(main_peptide)
                     elif comparison[0] == "partial":
@@ -1134,12 +1133,19 @@ def calculate_input_novel_test_peps(test_dict):
 
 def generate_main_comparison_results(test_dict, input_name, main_dict_one, main_dict_two=None):
     for key, value in sorted(test_dict.items()):
-        for pep in value:
-            if pep.origin_file == REF_FILE_NAME:
-                results = generate_main_comparisons(main_dict_one, pep)
+        if value is list:
+            for pep in value:
+                if pep.origin_file == REF_FILE_NAME:
+                    results = generate_main_comparisons(main_dict_one, pep)
+                else:  # pep.origin_file == TEST_FILE_NAME
+                    results = generate_main_comparisons(main_dict_two, pep)
+                input_main_comparison_result(pep, results, input_name)
+        else:
+            if value.origin_file == REF_FILE_NAME:
+                results = generate_main_comparisons(main_dict_one, value)
             else:  # pep.origin_file == TEST_FILE_NAME
-                results = generate_main_comparisons(main_dict_two, pep)
-            input_main_comparison_result(pep, results, input_name)
+                results = generate_main_comparisons(main_dict_two, value)
+            input_main_comparison_result(value, results, input_name)
 
 
 def generate_test_comparison_results(ref_dict, test_dict):

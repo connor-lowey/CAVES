@@ -1,4 +1,3 @@
-from math import ceil
 import pandas as pd
 import tkinter as tk
 from tkinter import *
@@ -25,8 +24,6 @@ TEST_FILE_NAME = ""
 MAIN_FILE_ONE_NAME = ""
 MAIN_FILE_TWO_NAME = ""
 
-INSERTIONS = []
-DELETIONS = []  # 69 70 144
 
 SEQ_ONE_GAPS = []
 SEQ_TWO_GAPS = []
@@ -41,9 +38,9 @@ LVL_SEL = "L1&L2"
 PEP_COLUMNS = ["peptide", "Peptide", "Peptide sequence"]
 START_COLUMNS = ["start", "Start", "Peptide start"]
 
-REF_PEPTIDE_MAX_LENGTH = 50  # 9
-TEST_PEPTIDE_MAX_LENGTH = 50  # 9
-MAIN_PEPTIDE_MAX_LENGTH = 50  # 36
+REF_PEPTIDE_MAX_LENGTH = 50
+TEST_PEPTIDE_MAX_LENGTH = 50
+MAIN_PEPTIDE_MAX_LENGTH = 50
 
 
 # ----------------------------------------------- CLASSES
@@ -182,35 +179,32 @@ class MainApplication:
         init_objects(self.level_selection.get())
 
         global LVL_SEL
-        # init_alignment(self.entry_indels_alignment.get().strip())  # REMOVE ME
 
-        print("Reading Ref file")
+        print("Reading epitope predictions: Sequence A file")
         ref_raw = init_ref_raw(self.entry_ref.get().strip())
         if ref_raw is None:
-            print("Unable to read ref file")
             return
 
         if LVL_SEL != "L2Only":
-            print("Reading Test file")
+            print("Reading epitope predictions: Sequence B file")
             test_raw = init_test_raw(self.entry_test.get().strip())
             if test_raw is None:
-                print("Unable to read test file")
                 return
 
         if LVL_SEL != "L1Only":
-            print("Reading main file one")
+            print("Reading database searches: Sequence A file")
             main_raw_one = init_main_raw(self.entry_main_one.get().strip())
             if main_raw_one is None:
-                print("Unable to read main file one")
+                print("Unable to read database searches: Sequence A file")
                 return
             global MAIN_FILE_ONE_NAME
             MAIN_FILE_ONE_NAME = self.entry_main_one.get().split("/").pop()
 
         if LVL_SEL == "L1&L2":
-            print("Reading main file two")
+            print("Reading database searches: Sequence B file")
             main_raw_two = init_main_raw(self.entry_main_two.get().strip())
             if main_raw_two is None:
-                print("Unable to read main file two")
+                print("Unable to read database searches: Sequence B file")
                 return
             global MAIN_FILE_TWO_NAME
             MAIN_FILE_TWO_NAME = self.entry_main_two.get().split("/").pop()
@@ -381,11 +375,6 @@ L1_matched_dict = {}
 
 
 def init_objects(lvl_sel):
-    global INSERTIONS
-    INSERTIONS = []
-
-    global DELETIONS
-    DELETIONS = []
 
     global REF_FILE_NAME
     REF_FILE_NAME = ""
@@ -416,55 +405,52 @@ def init_objects(lvl_sel):
     else:
         LVL_SEL = "L2Only"
 
-    if LVL_SEL == "L1&L2" or LVL_SEL == "L1Only":
-        global L1_novel
-        L1_novel = ResultSheetObject()
-        global L1_partial
-        L1_partial = ResultSheetObject()
-        global L1_matched
-        L1_matched = ResultSheetObject()
+    global L1_novel
+    L1_novel = ResultSheetObject()
+    global L1_partial
+    L1_partial = ResultSheetObject()
+    global L1_matched
+    L1_matched = ResultSheetObject()
 
-    if LVL_SEL == "L2Only":
-        global L2_novel
-        L2_novel = ResultSheetObject()
-        global L2_partial
-        L2_partial = ResultSheetObject()
-        global L2_matched
-        L2_matched = ResultSheetObject()
+    global L2_novel
+    L2_novel = ResultSheetObject()
+    global L2_partial
+    L2_partial = ResultSheetObject()
+    global L2_matched
+    L2_matched = ResultSheetObject()
 
-    if LVL_SEL == "L1&L2":
-        global L1_novel_L2_novel
-        L1_novel_L2_novel = ResultSheetObject()
-        global L1_novel_L2_partial
-        L1_novel_L2_partial = ResultSheetObject()
-        global L1_novel_L2_matched
-        L1_novel_L2_matched = ResultSheetObject()
+    global L1_novel_L2_novel
+    L1_novel_L2_novel = ResultSheetObject()
+    global L1_novel_L2_partial
+    L1_novel_L2_partial = ResultSheetObject()
+    global L1_novel_L2_matched
+    L1_novel_L2_matched = ResultSheetObject()
 
-        global L1_partial_L2_novel
-        L1_partial_L2_novel = ResultSheetObject()
-        global L1_partial_L2_partial
-        L1_partial_L2_partial = ResultSheetObject()
-        global L1_partial_L2_matched
-        L1_partial_L2_matched = ResultSheetObject()
+    global L1_partial_L2_novel
+    L1_partial_L2_novel = ResultSheetObject()
+    global L1_partial_L2_partial
+    L1_partial_L2_partial = ResultSheetObject()
+    global L1_partial_L2_matched
+    L1_partial_L2_matched = ResultSheetObject()
 
-        global L1_matched_L2_novel
-        L1_matched_L2_novel = ResultSheetObject()
-        global L1_matched_L2_partial
-        L1_matched_L2_partial = ResultSheetObject()
-        global L1_matched_L2_matched
-        L1_matched_L2_matched = ResultSheetObject()
+    global L1_matched_L2_novel
+    L1_matched_L2_novel = ResultSheetObject()
+    global L1_matched_L2_partial
+    L1_matched_L2_partial = ResultSheetObject()
+    global L1_matched_L2_matched
+    L1_matched_L2_matched = ResultSheetObject()
 
-        global L1_novel_dict
-        L1_novel_dict = {}
-        global L1_partial_dict
-        L1_partial_dict = {}
-        global L1_matched_dict
-        L1_matched_dict = {}
+    global L1_novel_dict
+    L1_novel_dict = {}
+    global L1_partial_dict
+    L1_partial_dict = {}
+    global L1_matched_dict
+    L1_matched_dict = {}
 
 
 def init_ref_raw(file_path):
     if not path.exists(file_path):
-        print("Unable to find ref file: " + file_path)
+        print("Unable to find predictions file: " + file_path)
         return None
 
     global REF_FILE_NAME
@@ -482,12 +468,18 @@ def init_ref_raw(file_path):
             continue
         break
 
+    if ref_raw is None:
+        print("Unable to read epitope predictions: Sequence A file")
+        print("Value Error: Check to make sure the column names are among the following:")
+        print("Start Columns:", START_COLUMNS)
+        print("Peptide Columns:", PEP_COLUMNS)
+
     return ref_raw
 
 
 def init_test_raw(file_path):
     if not path.exists(file_path):
-        print("Unable to find test file from path: " + file_path)
+        print("Unable to find predictions file: " + file_path)
         return None
 
     global TEST_FILE_NAME
@@ -505,18 +497,25 @@ def init_test_raw(file_path):
             continue
         break
 
+    if test_raw is None:
+        print("Unable to read epitope predictions: Sequence B file")
+        print("Value Error: Check to make sure the column names are among the following:")
+        print("Start Columns:", START_COLUMNS)
+        print("Peptide Columns:", PEP_COLUMNS)
+
     return test_raw
 
 
 def init_main_raw(file_path):
     if not path.exists(file_path):
-        print("Unable to find main file: " + file_path)
+        print("Unable to find database search file: " + file_path)
         return None
 
     try:
         main_raw = pd.read_csv(file_path, index_col=False, skiprows=1, usecols={"Description", "Starting Position"})
         return main_raw
     except ValueError:
+        print("Value Error: Check to make sure the column names are: 'Description' and 'Starting Position'")
         return None
 
 
@@ -537,22 +536,18 @@ def init_gap_chars(file_path):
 
             global SEQ_ONE_GAPS
             SEQ_ONE_GAPS = find_gap_chars(sequences[0])
-            print("Seq One Gaps ", SEQ_ONE_GAPS)
 
             if LVL_SEL != "L2Only":
                 global SEQ_TWO_GAPS
                 SEQ_TWO_GAPS = find_gap_chars(sequences[1])
-                print("Seq Two Gaps ", SEQ_TWO_GAPS)
             if LVL_SEL != "L1Only":
                 global SEQ_THREE_GAPS
                 SEQ_THREE_GAPS = find_gap_chars(sequences[2])
-                print("Seq Three Gaps ", SEQ_THREE_GAPS)
             if sequences[3] and LVL_SEL == "L1&L2":
                 global SEQ_FOUR_GAPS
                 SEQ_FOUR_GAPS = find_gap_chars(sequences[3])
                 global FOUR_SEQ_ALIGN
                 FOUR_SEQ_ALIGN = True
-                print("Seq Four Gaps ", SEQ_FOUR_GAPS)
     except:
         print("Alignment file processing error")
         return False
@@ -582,64 +577,6 @@ def find_gap_chars(seq):
         amino_acid_count += 1
 
     return gaps
-
-
-def find_indels(ref_sequence, test_sequence):
-    results = {}
-
-    refResults = find_seq_indels(ref_sequence)
-    results["insertions"] = refResults["indels"]
-    results["inFrameshifts"] = refResults["frameshifts"]
-
-    testResults = find_seq_indels(test_sequence)
-    results["deletions"] = testResults["indels"]
-    results["delFrameshifts"] = testResults["frameshifts"]
-
-    return results
-
-
-def find_seq_indels(sequence):
-    results = {"indels": [], "frameshifts": {}}
-
-    dashCount = 0
-    nucleotidesCount = 0
-    for char in sequence:
-        nucleotidesCount += 1
-        if char == '-':
-            if dashCount != 2:
-                dashCount += 1
-            else:
-                results["indels"].append(ceil(nucleotidesCount/3))
-                dashCount = 0
-        else:
-            if dashCount == 1:
-                results["frameshifts"][nucleotidesCount-1] = 1
-                dashCount = 0
-            if dashCount == 2:
-                results["frameshifts"][nucleotidesCount - 2] = 2
-                dashCount = 0
-    if dashCount == 1:
-        results["frameshifts"][nucleotidesCount] = 1
-    if dashCount == 2:
-        results["frameshifts"][nucleotidesCount - 1] = 2
-    return results
-
-
-def generate_frameshift_table(in_frameshifts, del_frameshifts):
-    result = "Nucleotide position | # of ins/dels | Insertion/Deletion | Sequence in File\n"
-    for key, value in in_frameshifts.items():
-        nucleotideString = str(key)
-        while len(nucleotideString) < 33:
-            nucleotideString += " "
-        result += nucleotideString + "| " + str(value) + "                      | Insertion                 | 1\n"
-
-    for key, value in del_frameshifts.items():
-        nucleotideString = str(key)
-        while len(nucleotideString) < 33:
-            nucleotideString += " "
-        result += nucleotideString + "| " + str(value) + "                      | Deletion                  | 2\n"
-
-    return result
 
 
 def init_threshold(threshold_entry):
@@ -676,7 +613,7 @@ def create_main_comparison_dict(main_dict_raw, main_file_name):
     main_list = list(main_dict_raw['data'])
     result_dict = {}
     for item in main_list:
-        if type(item[0]) is int:
+        if isinstance(item[0], int):
             result_dict = main_comparison_dict_insert(item[0], item[1], main_file_name, result_dict)
         else:
             result_dict = main_comparison_dict_insert(item[1], item[0], main_file_name, result_dict)
@@ -705,7 +642,7 @@ def create_test_comparison_dict(sample_dict_raw, test_file_name):
     result_dict = {}
 
     for item in sample_list:
-        if type(item[0]) is int:
+        if isinstance(item[0], int):
             result_dict = test_comparison_dict_insert(item[0], item[1], test_file_name, result_dict)
         else:
             result_dict = test_comparison_dict_insert(item[1], item[0], test_file_name, result_dict)
@@ -957,7 +894,6 @@ def compare_to_test_string(ref_peptide, test_peptide):
     ref_curr = comp_params["ref_start"] - ref_peptide.start
     test_curr = comp_params["test_start"] - test_peptide.start
 
-    # print(ref_peptide.peptide, test_peptide.peptide)
     for i in range(0, comp_params["num_comp"]):
         if ref_peptide.peptide[ref_curr] == test_peptide.peptide[test_curr]:
             matched_positions[comp_params["ref_start"]+i] = ref_peptide.peptide[ref_curr]
@@ -1133,7 +1069,7 @@ def calculate_input_novel_test_peps(test_dict):
 
 def generate_main_comparison_results(test_dict, input_name, main_dict_one, main_dict_two=None):
     for key, value in sorted(test_dict.items()):
-        if value is list:
+        if isinstance(value, list):
             for pep in value:
                 if pep.origin_file == REF_FILE_NAME:
                     results = generate_main_comparisons(main_dict_one, pep)

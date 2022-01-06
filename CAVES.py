@@ -1,4 +1,3 @@
-from math import ceil
 import pandas as pd
 import tkinter as tk
 from tkinter import *
@@ -25,18 +24,23 @@ TEST_FILE_NAME = ""
 MAIN_FILE_ONE_NAME = ""
 MAIN_FILE_TWO_NAME = ""
 
-INSERTIONS = []
-DELETIONS = []  # 69 70 144
+
+SEQ_ONE_GAPS = []
+SEQ_TWO_GAPS = []
+SEQ_THREE_GAPS = []
+SEQ_FOUR_GAPS = []
+
+FOUR_SEQ_ALIGN = False
 
 THRESHOLD = 1
-LVL_SEL = 1
+LVL_SEL = "L1&L2"
 
 PEP_COLUMNS = ["peptide", "Peptide", "Peptide sequence"]
 START_COLUMNS = ["start", "Start", "Peptide start"]
 
-REF_PEPTIDE_MAX_LENGTH = 50  # 9
-TEST_PEPTIDE_MAX_LENGTH = 50  # 9
-MAIN_PEPTIDE_MAX_LENGTH = 50  # 36
+REF_PEPTIDE_MAX_LENGTH = 50
+TEST_PEPTIDE_MAX_LENGTH = 50
+MAIN_PEPTIDE_MAX_LENGTH = 50
 
 
 # ----------------------------------------------- CLASSES
@@ -174,91 +178,77 @@ class MainApplication:
         print("Compare Start")
         init_objects(self.level_selection.get())
 
-        print("Reading Ref file")
+        global LVL_SEL
+
+        print("Reading epitope predictions: Sequence A file")
         ref_raw = init_ref_raw(self.entry_ref.get().strip())
         if ref_raw is None:
-            print("Unable to read ref file")
-            return
-        print("Reading Test file")
-        test_raw = init_test_raw(self.entry_test.get().strip())
-        if test_raw is None:
-            print("Unable to read test file")
             return
 
-        print("Reading main file one")
-        main_raw_one = init_main_raw(self.entry_main_one.get().strip())
-        if main_raw_one is None:
-            print("Unable to read main file one")
-            return
-        global MAIN_FILE_ONE_NAME
-        MAIN_FILE_ONE_NAME = self.entry_main_one.get().split("/").pop()
+        if LVL_SEL != "L2Only":
+            print("Reading epitope predictions: Sequence B file")
+            test_raw = init_test_raw(self.entry_test.get().strip())
+            if test_raw is None:
+                return
 
-        print("Reading main file two")
-        main_raw_two = init_main_raw(self.entry_main_two.get().strip())
-        if main_raw_two is None:
-            print("Unable to read main file two")
-            return
-        global MAIN_FILE_TWO_NAME
-        MAIN_FILE_TWO_NAME = self.entry_main_two.get().split("/").pop()
+        if LVL_SEL != "L1Only":
+            print("Reading database searches: Sequence A file")
+            main_raw_one = init_main_raw(self.entry_main_one.get().strip())
+            if main_raw_one is None:
+                print("Unable to read database searches: Sequence A file")
+                return
+            global MAIN_FILE_ONE_NAME
+            MAIN_FILE_ONE_NAME = self.entry_main_one.get().split("/").pop()
+
+        if LVL_SEL == "L1&L2":
+            print("Reading database searches: Sequence B file")
+            main_raw_two = init_main_raw(self.entry_main_two.get().strip())
+            if main_raw_two is None:
+                print("Unable to read database searches: Sequence B file")
+                return
+            global MAIN_FILE_TWO_NAME
+            MAIN_FILE_TWO_NAME = self.entry_main_two.get().split("/").pop()
 
         if self.entry_indels_alignment.get().strip() != "":
             print("Reading alignment file")
             if not init_alignment(self.entry_indels_alignment.get().strip()):
-                print("Unable to create insertion and deletion lists")
+                print("Unable to create gap character lists")
                 return
         else:
             print("Empty alignment file path")
+            return
 
         if not init_threshold(self.entry_threshold.get().strip()):
             print("Minimum peptide length input error: minimum length set to 1")
 
         result_file = generate_result_file(self.entry_result_file.get())
 
-        main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
-        main_dict_two = create_main_comparison_dict(main_raw_two.to_dict('split'), MAIN_FILE_TWO_NAME)
-
         ref_dictionary = create_test_comparison_dict(ref_raw.to_dict('split'), REF_FILE_NAME)
-        test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
 
-        generate_test_comparison_results(ref_dictionary, test_dictionary)
+        if LVL_SEL == "L1&L2":
+            test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
+            main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
+            main_dict_two = create_main_comparison_dict(main_raw_two.to_dict('split'), MAIN_FILE_TWO_NAME)
 
-        generate_main_comparison_results(L1_matched_dict, main_dict_one, main_dict_two, "L1m")
-        generate_main_comparison_results(L1_partial_dict, main_dict_one, main_dict_two, "L1p")
-        generate_main_comparison_results(L1_novel_dict, main_dict_one, main_dict_two, "L1n")
+            generate_test_comparison_results(ref_dictionary, test_dictionary)
 
-        L1m_df = create_match_df(L1_matched)
-        L1p_df = create_partial_df(L1_partial)
-        L1n_df = create_novel_df(L1_novel)
+            generate_main_comparison_results(L1_matched_dict, "L1m", main_dict_one, main_dict_two)
+            generate_main_comparison_results(L1_partial_dict, "L1p", main_dict_one, main_dict_two)
+            generate_main_comparison_results(L1_novel_dict, "L1n", main_dict_one, main_dict_two)
 
-        L1m_L2m_df = create_match_df(L1_matched_L2_matched)
-        L1m_L2p_df = create_partial_df(L1_matched_L2_partial)
-        L1m_L2n_df = create_novel_df(L1_matched_L2_novel)
+            finalize_L1L2_results(result_file)
 
-        L1p_L2m_df = create_match_df(L1_partial_L2_matched)
-        L1p_L2p_df = create_partial_df(L1_partial_L2_partial)
-        L1p_L2n_df = create_novel_df(L1_partial_L2_novel)
+        if LVL_SEL == "L1Only":
+            test_dictionary = create_test_comparison_dict(test_raw.to_dict('split'), TEST_FILE_NAME)
+            generate_test_comparison_results(ref_dictionary, test_dictionary)
 
-        L1n_L2m_df = create_match_df(L1_novel_L2_matched)
-        L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
-        L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
+            finalize_L1Only_results(result_file)
 
-        L1m_df.to_excel(result_file, sheet_name="L1M", index=False)
-        L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
-        L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
+        if LVL_SEL == "L2Only":
+            main_dict_one = create_main_comparison_dict(main_raw_one.to_dict('split'), MAIN_FILE_ONE_NAME)
+            generate_main_comparison_results(ref_dictionary, "L2", main_dict_one)
 
-        L1m_L2m_df.to_excel(result_file, sheet_name="L1M_L2M", index=False)
-        L1m_L2p_df.to_excel(result_file, sheet_name="L1M_L2P", index=False)
-        L1m_L2n_df.to_excel(result_file, sheet_name="L1M_L2N", index=False)
-
-        L1p_L2m_df.to_excel(result_file, sheet_name="L1P_L2M", index=False)
-        L1p_L2p_df.to_excel(result_file, sheet_name="L1P_L2P", index=False)
-        L1p_L2n_df.to_excel(result_file, sheet_name="L1P_L2N", index=False)
-
-        L1n_L2m_df.to_excel(result_file, sheet_name="L1N_L2M", index=False)
-        L1n_L2p_df.to_excel(result_file, sheet_name="L1N_L2P", index=False)
-        L1n_L2n_df.to_excel(result_file, sheet_name="L1N_L2N", index=False)
-
-        result_file.save()
+            finalize_L2Only_results(result_file)
 
         print("Compared")
         showinfo("CAVES", "Comparison Complete!")
@@ -385,64 +375,82 @@ L1_matched_dict = {}
 
 
 def init_objects(lvl_sel):
-    global INSERTIONS
-    INSERTIONS = []
 
-    global DELETIONS
-    DELETIONS = []
+    global REF_FILE_NAME
+    REF_FILE_NAME = ""
+    global TEST_FILE_NAME
+    TEST_FILE_NAME = ""
+    global MAIN_FILE_ONE_NAME
+    MAIN_FILE_ONE_NAME = ""
+    global MAIN_FILE_TWO_NAME
+    MAIN_FILE_TWO_NAME = ""
+
+    global SEQ_ONE_GAPS
+    SEQ_ONE_GAPS = []
+    global SEQ_TWO_GAPS
+    SEQ_TWO_GAPS = []
+    global SEQ_THREE_GAPS
+    SEQ_THREE_GAPS = []
+    global SEQ_FOUR_GAPS
+    SEQ_FOUR_GAPS = []
+
+    global FOUR_SEQ_ALIGN
+    FOUR_SEQ_ALIGN = False
 
     global LVL_SEL
-    LVL_SEL = lvl_sel
-
-    if lvl_sel == 1 or lvl_sel == 2:
-        global L1_novel
-        L1_novel = ResultSheetObject()
-        global L1_partial
-        L1_partial = ResultSheetObject()
-        global L1_matched
-        L1_matched = ResultSheetObject()
-
-    if lvl_sel == 3:
-        global L2_novel
-        L2_novel = ResultSheetObject()
-        global L2_partial
-        L2_partial = ResultSheetObject()
-        global L2_matched
-        L2_matched = ResultSheetObject()
-
     if lvl_sel == 1:
-        global L1_novel_L2_novel
-        L1_novel_L2_novel = ResultSheetObject()
-        global L1_novel_L2_partial
-        L1_novel_L2_partial = ResultSheetObject()
-        global L1_novel_L2_matched
-        L1_novel_L2_matched = ResultSheetObject()
+        LVL_SEL = "L1&L2"
+    elif lvl_sel == 2:
+        LVL_SEL = "L1Only"
+    else:
+        LVL_SEL = "L2Only"
 
-        global L1_partial_L2_novel
-        L1_partial_L2_novel = ResultSheetObject()
-        global L1_partial_L2_partial
-        L1_partial_L2_partial = ResultSheetObject()
-        global L1_partial_L2_matched
-        L1_partial_L2_matched = ResultSheetObject()
+    global L1_novel
+    L1_novel = ResultSheetObject()
+    global L1_partial
+    L1_partial = ResultSheetObject()
+    global L1_matched
+    L1_matched = ResultSheetObject()
 
-        global L1_matched_L2_novel
-        L1_matched_L2_novel = ResultSheetObject()
-        global L1_matched_L2_partial
-        L1_matched_L2_partial = ResultSheetObject()
-        global L1_matched_L2_matched
-        L1_matched_L2_matched = ResultSheetObject()
+    global L2_novel
+    L2_novel = ResultSheetObject()
+    global L2_partial
+    L2_partial = ResultSheetObject()
+    global L2_matched
+    L2_matched = ResultSheetObject()
 
-        global L1_novel_dict
-        L1_novel_dict = {}
-        global L1_partial_dict
-        L1_partial_dict = {}
-        global L1_matched_dict
-        L1_matched_dict = {}
+    global L1_novel_L2_novel
+    L1_novel_L2_novel = ResultSheetObject()
+    global L1_novel_L2_partial
+    L1_novel_L2_partial = ResultSheetObject()
+    global L1_novel_L2_matched
+    L1_novel_L2_matched = ResultSheetObject()
+
+    global L1_partial_L2_novel
+    L1_partial_L2_novel = ResultSheetObject()
+    global L1_partial_L2_partial
+    L1_partial_L2_partial = ResultSheetObject()
+    global L1_partial_L2_matched
+    L1_partial_L2_matched = ResultSheetObject()
+
+    global L1_matched_L2_novel
+    L1_matched_L2_novel = ResultSheetObject()
+    global L1_matched_L2_partial
+    L1_matched_L2_partial = ResultSheetObject()
+    global L1_matched_L2_matched
+    L1_matched_L2_matched = ResultSheetObject()
+
+    global L1_novel_dict
+    L1_novel_dict = {}
+    global L1_partial_dict
+    L1_partial_dict = {}
+    global L1_matched_dict
+    L1_matched_dict = {}
 
 
 def init_ref_raw(file_path):
     if not path.exists(file_path):
-        print("Unable to find ref file: " + file_path)
+        print("Unable to find predictions file: " + file_path)
         return None
 
     global REF_FILE_NAME
@@ -460,12 +468,18 @@ def init_ref_raw(file_path):
             continue
         break
 
+    if ref_raw is None:
+        print("Unable to read epitope predictions: Sequence A file")
+        print("Value Error: Check to make sure the column names are among the following:")
+        print("Start Columns:", START_COLUMNS)
+        print("Peptide Columns:", PEP_COLUMNS)
+
     return ref_raw
 
 
 def init_test_raw(file_path):
     if not path.exists(file_path):
-        print("Unable to find test file from path: " + file_path)
+        print("Unable to find predictions file: " + file_path)
         return None
 
     global TEST_FILE_NAME
@@ -483,18 +497,25 @@ def init_test_raw(file_path):
             continue
         break
 
+    if test_raw is None:
+        print("Unable to read epitope predictions: Sequence B file")
+        print("Value Error: Check to make sure the column names are among the following:")
+        print("Start Columns:", START_COLUMNS)
+        print("Peptide Columns:", PEP_COLUMNS)
+
     return test_raw
 
 
 def init_main_raw(file_path):
     if not path.exists(file_path):
-        print("Unable to find main file: " + file_path)
+        print("Unable to find database search file: " + file_path)
         return None
 
     try:
         main_raw = pd.read_csv(file_path, index_col=False, skiprows=1, usecols={"Description", "Starting Position"})
         return main_raw
     except ValueError:
+        print("Value Error: Check to make sure the column names are: 'Description' and 'Starting Position'")
         return None
 
 
@@ -503,151 +524,59 @@ def init_alignment(file_path):
         print("Unable to find alignment file from path: " + file_path)
         return False
 
+    result = init_gap_chars(file_path)
+
+    return result
+
+
+def init_gap_chars(file_path):
     try:
         with open(file_path) as my_file:
             sequences = build_sequences(my_file)
 
-            indelResults = find_indels(sequences["ref"], sequences["test"])
-            print("Insertions", indelResults["insertions"], "Deletions", indelResults["deletions"])
-            global INSERTIONS
-            INSERTIONS = indelResults["insertions"]
-            global DELETIONS
-            DELETIONS = indelResults["deletions"]
+            global SEQ_ONE_GAPS
+            SEQ_ONE_GAPS = find_gap_chars(sequences[0])
 
-            if indelResults["inFrameshifts"] or indelResults["delFrameshifts"]:
-                newWindow = Toplevel(window)
-                newWindow.title("Warning")
-                text = Text(newWindow)
-                text.insert(INSERT,
-                            "TOOL found one or more frameshift mutations in the pairwise alignment file provided "
-                            "(listed below). Epitopes predicted from these sequences will not produce biologically "
-                            "relevant matches when compared due to inherent differences in amino acids caused by the "
-                            "frameshifted sequence. TOOL will still run but we do not suggest using these results.")
-
-                frameshift_table = generate_frameshift_table(indelResults["inFrameshifts"],
-                                                             indelResults["delFrameshifts"])
-                text.insert(INSERT, "\n\n\n\n\n" + frameshift_table)
-                text.pack(expand=0, fill=BOTH)
-
-                # adding a tag to a part of text specifying the indices
-                text.tag_add("bold1", "1.23", "1.43")
-                text.tag_add("bold2", "1.149", "1.186")
-                bold_font = Font(family="Calibri", size=10, weight="bold")
-                text.tag_config("bold1", font=bold_font)
-                text.tag_config("bold2", font=bold_font)
+            if LVL_SEL != "L2Only":
+                global SEQ_TWO_GAPS
+                SEQ_TWO_GAPS = find_gap_chars(sequences[1])
+            if LVL_SEL != "L1Only":
+                global SEQ_THREE_GAPS
+                SEQ_THREE_GAPS = find_gap_chars(sequences[2])
+            if sequences[3] and LVL_SEL == "L1&L2":
+                global SEQ_FOUR_GAPS
+                SEQ_FOUR_GAPS = find_gap_chars(sequences[3])
+                global FOUR_SEQ_ALIGN
+                FOUR_SEQ_ALIGN = True
     except:
         print("Alignment file processing error")
-
-    return True
-
-
-def init_insertions(insertion_entry):
-    if not insertion_entry:
-        return True
-    try:
-        global INSERTIONS
-        insertions = insertion_entry.split()
-        for insertion in insertions:
-            if not str.isdigit(insertion):
-                raise
-            INSERTIONS.append(int(insertion))
-    except:
-        return False
-    return True
-
-
-def init_deletions(deletion_entry):
-    if not deletion_entry:
-        return True
-    try:
-        global DELETIONS
-        deletions = deletion_entry.split()
-        for deletion in deletions:
-            if not str.isdigit(deletion):
-                raise
-            DELETIONS.append(int(deletion))
-    except:
         return False
     return True
 
 
 def build_sequences(file):
-    results = {}
+    sequences = ["", "", "", ""]
 
-    refSeq = ""
-    testSeq = ""
-    refCreated = True
+    curr_seq = -1
     for line in file:
         if line[0] == ">":
-            refCreated = not refCreated
+            curr_seq += 1
         else:
             line = line.rstrip("\n")
-            if not refCreated:
-                refSeq += line
-            else:
-                testSeq += line
+            sequences[curr_seq] += line
 
-    results["ref"] = refSeq
-    results["test"] = testSeq
-    return results
+    return sequences
 
 
-def find_indels(ref_sequence, test_sequence):
-    results = {}
-
-    refResults = find_seq_indels(ref_sequence)
-    results["insertions"] = refResults["indels"]
-    results["inFrameshifts"] = refResults["frameshifts"]
-
-    testResults = find_seq_indels(test_sequence)
-    results["deletions"] = testResults["indels"]
-    results["delFrameshifts"] = testResults["frameshifts"]
-
-    return results
-
-
-def find_seq_indels(sequence):
-    results = {"indels": [], "frameshifts": {}}
-
-    dashCount = 0
-    nucleotidesCount = 0
-    for char in sequence:
-        nucleotidesCount += 1
+def find_gap_chars(seq):
+    gaps = []
+    amino_acid_count = 1
+    for char in seq:
         if char == '-':
-            if dashCount != 2:
-                dashCount += 1
-            else:
-                results["indels"].append(ceil(nucleotidesCount/3))
-                dashCount = 0
-        else:
-            if dashCount == 1:
-                results["frameshifts"][nucleotidesCount-1] = 1
-                dashCount = 0
-            if dashCount == 2:
-                results["frameshifts"][nucleotidesCount - 2] = 2
-                dashCount = 0
-    if dashCount == 1:
-        results["frameshifts"][nucleotidesCount] = 1
-    if dashCount == 2:
-        results["frameshifts"][nucleotidesCount - 1] = 2
-    return results
+            gaps.append(amino_acid_count)
+        amino_acid_count += 1
 
-
-def generate_frameshift_table(in_frameshifts, del_frameshifts):
-    result = "Nucleotide position | # of ins/dels | Insertion/Deletion | Sequence in File\n"
-    for key, value in in_frameshifts.items():
-        nucleotideString = str(key)
-        while len(nucleotideString) < 33:
-            nucleotideString += " "
-        result += nucleotideString + "| " + str(value) + "                      | Insertion                 | 1\n"
-
-    for key, value in del_frameshifts.items():
-        nucleotideString = str(key)
-        while len(nucleotideString) < 33:
-            nucleotideString += " "
-        result += nucleotideString + "| " + str(value) + "                      | Deletion                  | 2\n"
-
-    return result
+    return gaps
 
 
 def init_threshold(threshold_entry):
@@ -684,7 +613,7 @@ def create_main_comparison_dict(main_dict_raw, main_file_name):
     main_list = list(main_dict_raw['data'])
     result_dict = {}
     for item in main_list:
-        if type(item[0]) is int:
+        if isinstance(item[0], int):
             result_dict = main_comparison_dict_insert(item[0], item[1], main_file_name, result_dict)
         else:
             result_dict = main_comparison_dict_insert(item[1], item[0], main_file_name, result_dict)
@@ -713,7 +642,7 @@ def create_test_comparison_dict(sample_dict_raw, test_file_name):
     result_dict = {}
 
     for item in sample_list:
-        if type(item[0]) is int:
+        if isinstance(item[0], int):
             result_dict = test_comparison_dict_insert(item[0], item[1], test_file_name, result_dict)
         else:
             result_dict = test_comparison_dict_insert(item[1], item[0], test_file_name, result_dict)
@@ -733,26 +662,15 @@ def test_comparison_dict_insert(start, pep, test_file_name, res_dict):
     return res_dict
 
 
-def align_to_test_position(ref_position):
+def align_pos_gaps(ref_position, seq_one, seq_two):
     test_position = ref_position
-    for deletion in DELETIONS:
-        if ref_position > deletion:
-            test_position -= 1
-    for insertion in INSERTIONS:
-        if ref_position > insertion:
+    for gap_one in seq_one:
+        if ref_position > gap_one:
             test_position += 1
+    for gap_two in seq_two:
+        if ref_position > gap_two:
+            test_position -= 1
     return test_position
-
-
-def align_to_ref_position(test_position):
-    ref_position = test_position
-    for deletion in DELETIONS:
-        if test_position > deletion:
-            ref_position += 1
-    for insertion in INSERTIONS:
-        if test_position > insertion:
-            ref_position -= 1
-    return ref_position
 
 
 def get_result_object(result_type, input_file, level):
@@ -783,6 +701,13 @@ def get_result_object(result_type, input_file, level):
         return L1_novel_L2_partial
     if result_type == "novel" and level == 2 and input_file == "L1n":
         return L1_novel_L2_novel
+
+    if result_type == "matched" and level == 2 and input_file == "L2":
+        return L2_matched
+    if result_type == "partial" and level == 2 and input_file == "L2":
+        return L2_partial
+    if result_type == "novel" and level == 2 and input_file == "L2":
+        return L2_novel
 
 
 def create_match_df(obj):
@@ -909,22 +834,31 @@ def input_test_comparison_result(curr_pep, results):
                 insert_partial(result_obj, curr_pep, partial)
 
 
-def calculate_main_comparison_parameters(test_peptide, aligned_start, main_peptide):
+def calculate_main_comparison_parameters(test_peptide, main_peptide):
     result = {}
     if test_peptide.origin_file == TEST_FILE_NAME:
-        if aligned_start > main_peptide.start:
-            result["test_start"] = test_peptide.start
-            result["main_start"] = aligned_start
+        if FOUR_SEQ_ALIGN:
+            if align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS) > main_peptide.start:
+                result["test_start"] = test_peptide.start
+                result["main_start"] = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
+            else:
+                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_FOUR_GAPS, SEQ_TWO_GAPS)
+                result["main_start"] = main_peptide.start
         else:
-            result["test_start"] = align_to_test_position(main_peptide.start)
-            result["main_start"] = main_peptide.start
+            if align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS) > main_peptide.start:
+                result["test_start"] = test_peptide.start
+                result["main_start"] = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
+            else:
+                result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_THREE_GAPS, SEQ_TWO_GAPS)
+                result["main_start"] = main_peptide.start
     else:
-        if aligned_start > main_peptide.start:
+        if align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS) > main_peptide.start:
             result["test_start"] = test_peptide.start
-            result["main_start"] = test_peptide.start
+            result["main_start"] = align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
         else:
-            result["test_start"] = main_peptide.start
+            result["test_start"] = align_pos_gaps(main_peptide.start, SEQ_THREE_GAPS, SEQ_ONE_GAPS)
             result["main_start"] = main_peptide.start
+
     if main_peptide.end - result["main_start"] <= test_peptide.end - result["test_start"]:
         result["num_comp"] = main_peptide.end - result["main_start"] + 1
     else:
@@ -935,11 +869,11 @@ def calculate_main_comparison_parameters(test_peptide, aligned_start, main_pepti
 def calculate_test_comparison_parameters(ref_peptide, test_peptide):
     result = {}
 
-    if align_to_test_position(ref_peptide.start) > test_peptide.start:
+    if align_pos_gaps(ref_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS) > test_peptide.start:
         result["ref_start"] = ref_peptide.start
-        result["test_start"] = align_to_test_position(ref_peptide.start)
+        result["test_start"] = align_pos_gaps(ref_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
     else:
-        result["ref_start"] = align_to_ref_position(test_peptide.start)
+        result["ref_start"] = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_ONE_GAPS)
         result["test_start"] = test_peptide.start
     if ref_peptide.end - result["ref_start"] <= test_peptide.end - result["test_start"]:
         result["num_comp"] = ref_peptide.end - result["ref_start"] + 1
@@ -979,12 +913,12 @@ def compare_to_test_string(ref_peptide, test_peptide):
     return results
 
 
-def compare_to_main_string(test_peptide, aligned_start, aligned_end, main_peptide):
+def compare_to_main_string(test_peptide,  main_peptide):
     results = []
     novel_positions = {}
     matched_positions = {}
 
-    comp_params = calculate_main_comparison_parameters(test_peptide, aligned_start, main_peptide)
+    comp_params = calculate_main_comparison_parameters(test_peptide, main_peptide)
 
     test_curr = comp_params["test_start"] - test_peptide.start
     main_curr = comp_params["main_start"] - main_peptide.start
@@ -1012,8 +946,8 @@ def compare_to_main_string(test_peptide, aligned_start, aligned_end, main_peptid
 def generate_test_comparisons(dictionary, ref_peptide):
     result = {}
     comp_results = {"matched": [], "partial": [], "novel_test_peps": []}
-    aligned_test_start = align_to_test_position(ref_peptide.start)
-    aligned_test_end = align_to_test_position(ref_peptide.end)
+    aligned_test_start = align_pos_gaps(ref_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
+    aligned_test_end = align_pos_gaps(ref_peptide.end, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
 
     curr_pos = max(1, aligned_test_start-TEST_PEPTIDE_MAX_LENGTH)
 
@@ -1053,11 +987,21 @@ def generate_test_comparisons(dictionary, ref_peptide):
 def generate_main_comparisons(dictionary, test_peptide):
     result = {}
     comp_results = {"matched": [], "partial": [], "novel_pos_dict": {}}
-    aligned_test_start = test_peptide.start
-    aligned_test_end = test_peptide.end
-    if test_peptide.origin_file == TEST_FILE_NAME:
-        aligned_test_start = align_to_ref_position(aligned_test_start)
-        aligned_test_end = align_to_ref_position(aligned_test_end)
+
+    if LVL_SEL == "L2Only":
+        aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
+        aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
+    else:
+        if test_peptide.origin_file != TEST_FILE_NAME:
+            aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
+            aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_ONE_GAPS, SEQ_THREE_GAPS)
+        else:
+            if FOUR_SEQ_ALIGN:
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_TWO_GAPS, SEQ_FOUR_GAPS)
+            else:
+                aligned_test_start = align_pos_gaps(test_peptide.start, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
+                aligned_test_end = align_pos_gaps(test_peptide.end, SEQ_TWO_GAPS, SEQ_THREE_GAPS)
 
     curr_pos = max(1, aligned_test_start-MAIN_PEPTIDE_MAX_LENGTH)
 
@@ -1070,7 +1014,7 @@ def generate_main_comparisons(dictionary, test_peptide):
                         ((aligned_test_start <= main_peptide.start <= aligned_test_end) or
                          (aligned_test_start <= main_peptide.end <= aligned_test_end)):
                     comparison = \
-                        compare_to_main_string(test_peptide, aligned_test_start, aligned_test_end, main_peptide)
+                        compare_to_main_string(test_peptide, main_peptide)
                     if comparison[0] == "matched":
                         comp_results["matched"].append(main_peptide)
                     elif comparison[0] == "partial":
@@ -1123,14 +1067,21 @@ def calculate_input_novel_test_peps(test_dict):
             insert_novel(res_obj, value)
 
 
-def generate_main_comparison_results(test_dict, main_dict_one, main_dict_two, input_name):
+def generate_main_comparison_results(test_dict, input_name, main_dict_one, main_dict_two=None):
     for key, value in sorted(test_dict.items()):
-        for pep in value:
-            if pep.origin_file == REF_FILE_NAME:
-                results = generate_main_comparisons(main_dict_one, pep)
+        if isinstance(value, list):
+            for pep in value:
+                if pep.origin_file == REF_FILE_NAME:
+                    results = generate_main_comparisons(main_dict_one, pep)
+                else:  # pep.origin_file == TEST_FILE_NAME
+                    results = generate_main_comparisons(main_dict_two, pep)
+                input_main_comparison_result(pep, results, input_name)
+        else:
+            if value.origin_file == REF_FILE_NAME:
+                results = generate_main_comparisons(main_dict_one, value)
             else:  # pep.origin_file == TEST_FILE_NAME
-                results = generate_main_comparisons(main_dict_two, pep)
-            input_main_comparison_result(pep, results, input_name)
+                results = generate_main_comparisons(main_dict_two, value)
+            input_main_comparison_result(value, results, input_name)
 
 
 def generate_test_comparison_results(ref_dict, test_dict):
@@ -1138,6 +1089,66 @@ def generate_test_comparison_results(ref_dict, test_dict):
         results = generate_test_comparisons(test_dict, value)
         input_test_comparison_result(value, results)
     calculate_input_novel_test_peps(test_dict)
+
+
+def finalize_L1L2_results(result_file):
+    L1m_df = create_match_df(L1_matched)
+    L1p_df = create_partial_df(L1_partial)
+    L1n_df = create_novel_df(L1_novel)
+
+    L1m_L2m_df = create_match_df(L1_matched_L2_matched)
+    L1m_L2p_df = create_partial_df(L1_matched_L2_partial)
+    L1m_L2n_df = create_novel_df(L1_matched_L2_novel)
+
+    L1p_L2m_df = create_match_df(L1_partial_L2_matched)
+    L1p_L2p_df = create_partial_df(L1_partial_L2_partial)
+    L1p_L2n_df = create_novel_df(L1_partial_L2_novel)
+
+    L1n_L2m_df = create_match_df(L1_novel_L2_matched)
+    L1n_L2p_df = create_partial_df(L1_novel_L2_partial)
+    L1n_L2n_df = create_novel_df(L1_novel_L2_novel)
+
+    L1m_df.to_excel(result_file, sheet_name="L1E", index=False)
+    L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
+    L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
+
+    L1m_L2m_df.to_excel(result_file, sheet_name="L1E_L2E", index=False)
+    L1m_L2p_df.to_excel(result_file, sheet_name="L1E_L2P", index=False)
+    L1m_L2n_df.to_excel(result_file, sheet_name="L1E_L2N", index=False)
+
+    L1p_L2m_df.to_excel(result_file, sheet_name="L1P_L2E", index=False)
+    L1p_L2p_df.to_excel(result_file, sheet_name="L1P_L2P", index=False)
+    L1p_L2n_df.to_excel(result_file, sheet_name="L1P_L2N", index=False)
+
+    L1n_L2m_df.to_excel(result_file, sheet_name="L1N_L2E", index=False)
+    L1n_L2p_df.to_excel(result_file, sheet_name="L1N_L2P", index=False)
+    L1n_L2n_df.to_excel(result_file, sheet_name="L1N_L2N", index=False)
+
+    result_file.save()
+
+
+def finalize_L1Only_results(result_file):
+    L1m_df = create_match_df(L1_matched)
+    L1p_df = create_partial_df(L1_partial)
+    L1n_df = create_novel_df(L1_novel)
+
+    L1m_df.to_excel(result_file, sheet_name="L1E", index=False)
+    L1p_df.to_excel(result_file, sheet_name="L1P", index=False)
+    L1n_df.to_excel(result_file, sheet_name="L1N", index=False)
+
+    result_file.save()
+
+
+def finalize_L2Only_results(result_file):
+    L2m_df = create_match_df(L2_matched)
+    L2p_df = create_partial_df(L2_partial)
+    L2n_df = create_novel_df(L2_novel)
+
+    L2m_df.to_excel(result_file, sheet_name="L2E", index=False)
+    L2p_df.to_excel(result_file, sheet_name="L2P", index=False)
+    L2n_df.to_excel(result_file, sheet_name="L2N", index=False)
+
+    result_file.save()
 
 
 # ----------------------------------------------- MAIN

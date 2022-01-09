@@ -65,11 +65,12 @@ Sequence order **MUST** be:
 
 &nbsp;
 
-**To get IEDB database parent protein sequence**:  
-* From IEDB database search results page, navigate to ***Assays*** tab
-* Click the **ID** number of any assay to open assay details
-* Scroll down to the ***Epitope*** table, find the ***Source Molecule Name*** row
-* Click the provided **link** to the parent protein entry on NCBI, obtain sequence in **FASTA** format
+**To get the IEDB parent protein sequence**:  
+* Within each downloaded IEDB database search results file, navigate to the ***Parent Protein Accession*** column
+* Copy the **NCBI accession** number
+* Go to the NCBI website ( https://www.ncbi.nlm.nih.gov/)  and **search the accession** to find the corresponding database entry
+* Copy/download sequence in **FASTA** format
+
 	
 *Hint*: If sequence A and B IEDB queries produce the same parent protein, this only needs to be included in the MSA once.  
 If sequence A and B produce different parent proteins, list as ***Sequence A parent protein*** before ***Sequence B parent protein***.

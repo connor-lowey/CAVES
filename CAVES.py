@@ -1285,6 +1285,6 @@ if __name__ == '__main__':
     font = Font(family="Calibri", size=10)
     window.option_add("*Font", font)
 
-    window.title("CAVES")
+    window.title("CAVES 1.0")
     app = MainApplication(window)
     window.mainloop()

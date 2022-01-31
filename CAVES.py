@@ -175,7 +175,7 @@ class MainApplication:
 
         self.frame_button = tk.Frame(self.frame, bd='3', padx=3, pady=3)
         self.button_start = tk.Button(self.frame_button, text='Compare', font=submit_font, command=self.start_clicked)
-        self.button_cancel = tk.Button(self.frame_button, text='Cancel', font=submit_font, command=master.destroy)
+        self.button_cancel = tk.Button(self.frame_button, text='Cancel', font=submit_font, command=self.clear_fields)
 
         self.button_cancel.place(relx=0.6, rely=0.22, relheight=0.6, relwidth=0.18)
         self.button_start.place(relx=0.8, rely=0.22, relheight=0.6, relwidth=0.18)
@@ -269,6 +269,15 @@ class MainApplication:
 
         print("Compared")
         showinfo("CAVES", "Comparison Complete!")
+
+    def clear_fields(self):
+        self.entry_ref.delete(0, tk.END)
+        self.entry_test.delete(0, tk.END)
+        self.entry_main_one.delete(0, tk.END)
+        self.entry_main_two.delete(0, tk.END)
+        self.entry_indels_alignment.delete(0, tk.END)
+        self.entry_threshold.delete(0, tk.END)
+        self.entry_result_file.delete(0, tk.END)
 
     def browse_ref(self):
         filename = filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])

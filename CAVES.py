@@ -716,6 +716,14 @@ def align_pos_gaps(ref_position, seq_one, seq_two):
     return test_position
 
 
+def apply_applicable_gaps(pos, gaps):
+    result_pos = pos
+    for gap in gaps:
+        if result_pos > gap:
+            result_pos += 1
+    return result_pos
+
+
 def rel_diff_between_pos(ref_pos, seq_one_gaps, test_pos, seq_two_gaps):
     total_ref_gaps = 0
     total_test_gaps = 0
@@ -972,7 +980,7 @@ def calculate_main_comparison_parameters(test_peptide, main_peptide):
     return result
 
 
-def calculate_test_comparison_parameters(ref_peptide, test_peptide):
+def calculate_test_comparison_parameters(ref_peptide, test_peptide, ref_gaps, test_gaps):
     result = {}
 
     if align_pos_gaps(ref_peptide.start, SEQ_ONE_GAPS, SEQ_TWO_GAPS) > test_peptide.start:
@@ -987,8 +995,14 @@ def calculate_test_comparison_parameters(ref_peptide, test_peptide):
         result["test_start"] = test_peptide.start
     if ref_peptide.end - result["ref_start"] <= test_peptide.end - result["test_start"]:
         result["num_comp"] = ref_peptide.end - result["ref_start"] + 1
+        for gap in ref_gaps:
+            if result["ref_start"] <= gap < ref_peptide.end:
+                result["num_comp"] += 1
     else:
         result["num_comp"] = test_peptide.end - result["test_start"] + 1
+        for gap in test_gaps:
+            if result["test_start"] <= gap < test_peptide.end:
+                result["num_comp"] += 1
     return result
 
 
@@ -1000,22 +1014,22 @@ def compare_to_test_string(ref_peptide, test_peptide):
 
     smallest_max_length = ref_peptide.length if ref_peptide.length < test_peptide.length else test_peptide.length
 
-    comp_params = calculate_test_comparison_parameters(ref_peptide, test_peptide)
-
     global SEQ_ONE_GAPS
     global SEQ_TWO_GAPS
+
+    comp_params = calculate_test_comparison_parameters(ref_peptide, test_peptide, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
+
     ref_curr = comp_params["ref_start"] - ref_peptide.start
     test_curr = comp_params["test_start"] - test_peptide.start
-    for i in range(0, comp_params["num_comp"]):
-        overall_ref_pos = comp_params["ref_start"] + i
-        overall_test_pos = comp_params["test_start"] + i
+    overall_pos = apply_applicable_gaps(comp_params["ref_start"], SEQ_ONE_GAPS)
 
-        if overall_ref_pos in SEQ_TWO_GAPS and overall_test_pos not in SEQ_ONE_GAPS:
+    for i in range(0, comp_params["num_comp"]):
+        if overall_pos in SEQ_TWO_GAPS and overall_pos not in SEQ_ONE_GAPS:
             novel_ref_positions[comp_params["ref_start"] + i] = ref_peptide.peptide[ref_curr]
             novel_test_positions[comp_params["test_start"] + i] = '-'
             ref_curr += 1
 
-        elif overall_ref_pos not in SEQ_TWO_GAPS and overall_test_pos in SEQ_ONE_GAPS:
+        elif overall_pos not in SEQ_TWO_GAPS and overall_pos in SEQ_ONE_GAPS:
             novel_ref_positions[comp_params["ref_start"] + i] = '-'
             novel_test_positions[comp_params["test_start"] + i] = test_peptide.peptide[test_curr]
             test_curr += 1
@@ -1030,6 +1044,7 @@ def compare_to_test_string(ref_peptide, test_peptide):
             novel_test_positions[comp_params["test_start"]+i] = test_peptide.peptide[test_curr]
             ref_curr += 1
             test_curr += 1
+        overall_pos += 1
 
     if len(matched_positions) == smallest_max_length:
         results.append("matched")
@@ -1054,6 +1069,7 @@ def compare_to_main_string(test_peptide,  main_peptide):
     test_curr = comp_params["test_start"] - test_peptide.start
     main_curr = comp_params["main_start"] - main_peptide.start
 
+    #  Consider adding back in overall_pos to main. Problem is difference in alignments from main file sequences
     for i in range(0, comp_params["num_comp"]):
         if test_peptide.peptide[test_curr] == main_peptide.peptide[main_curr]:
             matched_positions[comp_params["test_start"]+i] = test_peptide.peptide[test_curr]

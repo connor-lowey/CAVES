@@ -1019,11 +1019,9 @@ def compare_to_test_string(ref_peptide, test_peptide):
     while comp_params["ref_start"]+i <= ref_peptide.end and comp_params["test_start"]+i <= test_peptide.end:
         if overall_pos in SEQ_TWO_GAPS and overall_pos not in SEQ_ONE_GAPS:
             novel_ref_positions[comp_params["ref_start"] + i] = ref_peptide.peptide[ref_curr]
-            novel_test_positions[comp_params["test_start"] + i] = '-'
             ref_curr += 1
 
         elif overall_pos not in SEQ_TWO_GAPS and overall_pos in SEQ_ONE_GAPS:
-            novel_ref_positions[comp_params["ref_start"] + i] = '-'
             novel_test_positions[comp_params["test_start"] + i] = test_peptide.peptide[test_curr]
             test_curr += 1
 

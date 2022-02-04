@@ -810,6 +810,17 @@ def create_novel_df(obj, level):
                              'End': obj.end_one, 'Length': obj.length_one})
 
 
+def insert_biggest_mutation_pos_list(res_obj, novel):
+    index = res_obj.peptide_one.index(novel[0].peptide)
+
+    curr_mut_list = (res_obj.mutated_pos[index]).split(",")
+    if len(curr_mut_list) < len(novel[2]):
+        mutated_list = ""
+        for pos in novel[2]:
+            mutated_list += str(pos) + ", "
+        res_obj.mutated_pos[index] = mutated_list.rstrip(", ")
+
+
 def insert_level_one_obj(lvl_one_dict, curr_pep):
     if curr_pep.start in lvl_one_dict:
         matched = False
@@ -922,6 +933,8 @@ def input_test_comparison_result(curr_pep, results):
                 for pos in novel[2]:
                     mutated_list += str(pos) + ", "
                 insert_novel(res_obj, novel[0], mutated_list.rstrip(", "))
+            else:
+                insert_biggest_mutation_pos_list(res_obj, novel)
     else:
         if "matched" in results:
             insert_level_one_obj(L1_matched_dict, curr_pep)
@@ -1015,28 +1028,34 @@ def compare_to_test_string(ref_peptide, test_peptide):
     test_curr = comp_params["test_start"] - test_peptide.start
     overall_pos = apply_applicable_gaps(comp_params["ref_start"], SEQ_ONE_GAPS)
 
-    i = 0
-    while comp_params["ref_start"]+i <= ref_peptide.end and comp_params["test_start"]+i <= test_peptide.end:
+    ref_i = 0
+    test_i = 0
+    while comp_params["ref_start"]+ref_i <= ref_peptide.end and comp_params["test_start"]+test_i <= test_peptide.end:
         if overall_pos in SEQ_TWO_GAPS and overall_pos not in SEQ_ONE_GAPS:
-            novel_ref_positions[comp_params["ref_start"] + i] = ref_peptide.peptide[ref_curr]
+            novel_ref_positions[comp_params["ref_start"]+ref_i] = ref_peptide.peptide[ref_curr]
             ref_curr += 1
+            ref_i += 1
 
         elif overall_pos not in SEQ_TWO_GAPS and overall_pos in SEQ_ONE_GAPS:
-            novel_test_positions[comp_params["test_start"] + i] = test_peptide.peptide[test_curr]
+            novel_test_positions[comp_params["test_start"]+test_i] = test_peptide.peptide[test_curr]
             test_curr += 1
+            test_i += 1
 
         elif ref_peptide.peptide[ref_curr] == test_peptide.peptide[test_curr]:
-            matched_positions[comp_params["ref_start"]+i] = ref_peptide.peptide[ref_curr]
+            matched_positions[comp_params["ref_start"]+ref_i] = ref_peptide.peptide[ref_curr]
             ref_curr += 1
+            ref_i += 1
             test_curr += 1
+            test_i += 1
 
         else:
-            novel_ref_positions[comp_params["ref_start"]+i] = ref_peptide.peptide[ref_curr]
-            novel_test_positions[comp_params["test_start"]+i] = test_peptide.peptide[test_curr]
+            novel_ref_positions[comp_params["ref_start"]+ref_i] = ref_peptide.peptide[ref_curr]
+            novel_test_positions[comp_params["test_start"]+test_i] = test_peptide.peptide[test_curr]
             ref_curr += 1
+            ref_i += 1
             test_curr += 1
+            test_i += 1
         overall_pos += 1
-        i += 1
 
     if len(matched_positions) == smallest_max_length and len(novel_ref_positions) == 0:
         results.append("matched")

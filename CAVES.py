@@ -25,6 +25,7 @@ from tkinter.font import Font
 
 from os import path
 import sys
+import bisect
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     print('running in a PyInstaller bundle')
@@ -326,17 +327,17 @@ class MainApplication:
 
         self.entry_ref.config(state='normal')
         self.entry_test.config(state='normal')
-        self.entry_main_one.config(state='disabled')
-        self.entry_main_two.config(state='disabled')
+        self.entry_main_one.config(state='disabled', disabledbackground="#c4c4c4")
+        self.entry_main_two.config(state='disabled', disabledbackground="#c4c4c4")
 
     def config_L2_only_entries(self):
         self.entry_test.delete(0, tk.END)
         self.entry_main_two.delete(0, tk.END)
 
         self.entry_ref.config(state='normal')
-        self.entry_test.config(state='disabled')
+        self.entry_test.config(state='disabled', disabledbackground="#c4c4c4")
         self.entry_main_one.config(state='normal')
-        self.entry_main_two.config(state='disabled')
+        self.entry_main_two.config(state='disabled', disabledbackground="#c4c4c4")
 
 
 class ResultSheetObject:
@@ -565,16 +566,20 @@ def init_gap_chars(file_path):
 
             global SEQ_ONE_GAPS
             SEQ_ONE_GAPS = find_gap_chars(sequences[0])
+            print("Sequence A Gap Characters: ", SEQ_ONE_GAPS)
 
             if LVL_SEL != "L2Only":
                 global SEQ_TWO_GAPS
                 SEQ_TWO_GAPS = find_gap_chars(sequences[1])
+                print("Sequence B Gap Characters: ", SEQ_TWO_GAPS)
             if LVL_SEL != "L1Only":
                 global SEQ_THREE_GAPS
                 SEQ_THREE_GAPS = find_gap_chars(sequences[2])
+                print("Parent Protein A Gap Characters: ", SEQ_THREE_GAPS)
             if sequences[3] and LVL_SEL == "L1&L2":
                 global SEQ_FOUR_GAPS
                 SEQ_FOUR_GAPS = find_gap_chars(sequences[3])
+                print("Parent Protein B Gap Characters: ", SEQ_FOUR_GAPS)
                 global FOUR_SEQ_ALIGN
                 FOUR_SEQ_ALIGN = True
 
@@ -740,9 +745,6 @@ def rel_diff_between_pos(ref_pos, seq_one_gaps, test_pos, seq_two_gaps):
     for gap_one in seq_one_gaps:
         if ref_pos <= gap_one <= ref_pos + rel_dist:
             final_dist -= 1
-    for gap_two in seq_two_gaps:
-        if ref_pos <= gap_two <= ref_pos + rel_dist:
-            final_dist += 1
 
     return final_dist
 
@@ -802,7 +804,7 @@ def create_partial_df(obj):
 def create_novel_df(obj, level):
     if level == "L1":
         return pd.DataFrame({'Origin': obj.origin_file_one, 'Peptide': obj.peptide_one, 'Start': obj.start_one,
-                             'End': obj.end_one, 'Length': obj.length_one, 'Mutated Positions': obj.mutated_pos})
+                             'End': obj.end_one, 'Length': obj.length_one, 'Mismatched Positions': obj.mutated_pos})
     else:
         return pd.DataFrame({'Origin': obj.origin_file_one, 'Peptide': obj.peptide_one, 'Start': obj.start_one,
                              'End': obj.end_one, 'Length': obj.length_one})
@@ -876,22 +878,22 @@ def all_novel_positions_covered(partial_matches, novel_positions):
     return len(novel_positions) == 0
 
 
-def find_most_mutations(novel_peps):
+def find_all_mutations(novel_peps):
     if not novel_peps:
         return ""
 
-    longest_mutation_list = []
-    longest = 0
+    mutation_list = []
+
     for pep in novel_peps:
-        if len(pep[1]) > longest:
-            longest = len(pep[1])
-            longest_mutation_list = pep[1]
+        for pos in pep[1]:
+            if pos not in mutation_list:
+                bisect.insort(mutation_list, pos)
 
-    longest_mutation_list_pos = ""
-    for pos in longest_mutation_list:
-        longest_mutation_list_pos += str(pos) + ", "
+    mutation_list_pos = ""
+    for pos in mutation_list:
+        mutation_list_pos += str(pos) + ", "
 
-    return longest_mutation_list_pos.rstrip(", ")
+    return mutation_list_pos.rstrip(", ")
 
 
 def input_main_comparison_result(curr_pep, results, input_file):
@@ -911,7 +913,7 @@ def input_main_comparison_result(curr_pep, results, input_file):
 def input_test_comparison_result(curr_pep, results):
     if "novel" in results:
         insert_level_one_obj(L1_novel_dict, curr_pep)
-        most_mutations = find_most_mutations(results["novel"])
+        most_mutations = find_all_mutations(results["novel"])
         res_obj = get_result_object("novel", "", 1)
         insert_novel(res_obj, curr_pep, most_mutations)
         for novel in results["novel"]:
@@ -993,16 +995,6 @@ def calculate_test_comparison_parameters(ref_peptide, test_peptide, ref_gaps, te
     else:
         result["ref_start"] = ref_peptide.start
         result["test_start"] = test_peptide.start
-    if ref_peptide.end - result["ref_start"] <= test_peptide.end - result["test_start"]:
-        result["num_comp"] = ref_peptide.end - result["ref_start"] + 1
-        for gap in ref_gaps:
-            if result["ref_start"] <= gap < ref_peptide.end:
-                result["num_comp"] += 1
-    else:
-        result["num_comp"] = test_peptide.end - result["test_start"] + 1
-        for gap in test_gaps:
-            if result["test_start"] <= gap < test_peptide.end:
-                result["num_comp"] += 1
     return result
 
 
@@ -1023,7 +1015,8 @@ def compare_to_test_string(ref_peptide, test_peptide):
     test_curr = comp_params["test_start"] - test_peptide.start
     overall_pos = apply_applicable_gaps(comp_params["ref_start"], SEQ_ONE_GAPS)
 
-    for i in range(0, comp_params["num_comp"]):
+    i = 0
+    while comp_params["ref_start"]+i <= ref_peptide.end and comp_params["test_start"]+i <= test_peptide.end:
         if overall_pos in SEQ_TWO_GAPS and overall_pos not in SEQ_ONE_GAPS:
             novel_ref_positions[comp_params["ref_start"] + i] = ref_peptide.peptide[ref_curr]
             novel_test_positions[comp_params["test_start"] + i] = '-'
@@ -1045,8 +1038,9 @@ def compare_to_test_string(ref_peptide, test_peptide):
             ref_curr += 1
             test_curr += 1
         overall_pos += 1
+        i += 1
 
-    if len(matched_positions) == smallest_max_length:
+    if len(matched_positions) == smallest_max_length and len(novel_ref_positions) == 0:
         results.append("matched")
     elif len(novel_ref_positions) > 0:
         results.append("novel")

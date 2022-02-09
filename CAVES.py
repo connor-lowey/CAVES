@@ -1023,7 +1023,7 @@ def compare_to_test_string(ref_peptide, test_peptide):
 
     if len(matched_positions) == smallest_max_length and len(novel_ref_positions) == 0:
         results.append("matched")
-    elif len(novel_ref_positions) > 0:
+    elif len(novel_ref_positions) > 0 or len(novel_test_positions) > 0:
         results.append("novel")
         results.append(novel_ref_positions)
         results.append(novel_test_positions)

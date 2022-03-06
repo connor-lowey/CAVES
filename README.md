@@ -12,7 +12,7 @@ In both levels, epitopes are sorted into categories of **exact matches**, **part
 * **Sample dataset**: https://github.com/connor-lowey/CAVES/tree/main/sample_dataset
 
 # Installation
-CAVES runs through a graphical user interface on Windows operating systems. The software is downloadable as a zipped file containing the standalone executable program with all required dependencies precompiled. Once unzipped, the executable can be found in the ***dist*** directory.
+CAVES runs through a graphical user interface on Windows operating systems. The software is downloadable as a zipped file containing the standalone executable program with all required dependencies precompiled.
 
 # Running CAVES
 ## Level-one input files

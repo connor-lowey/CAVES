@@ -812,9 +812,16 @@ def create_novel_df(obj, level):
 def insert_biggest_mutation_pos_list(res_obj, novel):
     index = res_obj.peptide_one.index(novel[0].peptide)
 
-    curr_mut_list = (res_obj.mutated_pos[index]).split(",")
-    curr_mut_list = list(map(int, curr_mut_list))
     new_mut_list = novel[2]
+    curr_mut_list = (res_obj.mutated_pos[index]).split(",")
+    if len(curr_mut_list) == 1 and curr_mut_list[0] == '':
+        mutated_list = ""
+        for pos in new_mut_list:
+            mutated_list += str(pos) + ", "
+        res_obj.mutated_pos[index] = mutated_list.rstrip(", ")
+        return
+
+    curr_mut_list = list(map(int, curr_mut_list))
     changed = False
     for new_pos in new_mut_list:
         if new_pos not in curr_mut_list:

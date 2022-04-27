@@ -109,7 +109,7 @@ class MainApplication:
                                               font=title_font)
         self.entry_threshold = tk.Entry(self.frame_input, bd='3', justify="center")
         self.label_threshold_helper = tk.Label(self.frame_input,
-                                               text='Default minimum is 3 amino acid',
+                                               text='Default minimum is 3 amino acids',
                                                bd='3', fg='red')
 
         self.label_radio_title = tk.Label(self.frame_input, text='Level Selection', bd='3', fg='blue',

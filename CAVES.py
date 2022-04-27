@@ -50,7 +50,7 @@ SEQ_FOUR_GAPS = []
 FOUR_SEQ_ALIGN = False
 ALIGNMENT_WARNING = False
 
-THRESHOLD = 1
+THRESHOLD = 3
 LVL_SEL = "L1&L2"
 
 PEP_COLUMNS = ["peptide", "Peptide", "Peptide sequence"]
@@ -109,7 +109,7 @@ class MainApplication:
                                               font=title_font)
         self.entry_threshold = tk.Entry(self.frame_input, bd='3', justify="center")
         self.label_threshold_helper = tk.Label(self.frame_input,
-                                               text='Default minimum is 1 amino acid',
+                                               text='Default minimum is 3 amino acid',
                                                bd='3', fg='red')
 
         self.label_radio_title = tk.Label(self.frame_input, text='Level Selection', bd='3', fg='blue',
@@ -630,14 +630,14 @@ def find_gap_chars(seq):
 def init_threshold(threshold_entry):
     global THRESHOLD
     if not threshold_entry:
-        THRESHOLD = 1
+        THRESHOLD = 3
         return True
     try:
         if not str.isdigit(threshold_entry):
             raise
         THRESHOLD = int(threshold_entry)
     except:
-        THRESHOLD = 1
+        THRESHOLD = 3
         return False
     return True
 

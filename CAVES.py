@@ -982,6 +982,16 @@ def calculate_comparison_parameters(peptide_one, peptide_two, gaps_one, gaps_two
     return result
 
 
+def skip_matching_gap_chars(overall_pos, one_gaps, two_gaps):
+    matching_gaps = True
+    while matching_gaps:
+        if overall_pos in one_gaps and overall_pos in two_gaps:
+            overall_pos += 1
+        else:
+            matching_gaps = False
+    return overall_pos
+
+
 def compare_to_test_string(ref_peptide, test_peptide):
     results = []
     novel_ref_positions = {}
@@ -1002,6 +1012,8 @@ def compare_to_test_string(ref_peptide, test_peptide):
     ref_i = 0
     test_i = 0
     while comp_params["start_one"]+ref_i <= ref_peptide.end and comp_params["start_two"]+test_i <= test_peptide.end:
+        if overall_pos in SEQ_TWO_GAPS and overall_pos in SEQ_ONE_GAPS:
+            overall_pos = skip_matching_gap_chars(overall_pos, SEQ_ONE_GAPS, SEQ_TWO_GAPS)
         if overall_pos in SEQ_TWO_GAPS and overall_pos not in SEQ_ONE_GAPS:
             novel_ref_positions[comp_params["start_one"]+ref_i] = ref_peptide.peptide[ref_curr]
             ref_curr += 1

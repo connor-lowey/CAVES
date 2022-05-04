@@ -1098,14 +1098,19 @@ def generate_test_comparisons(dictionary, ref_peptide):
 
     curr_pos = max(1, aligned_test_start-TEST_PEPTIDE_MAX_LENGTH)
 
+    overall_ref_start_pos = translate_to_overall_pos(ref_peptide.start, SEQ_ONE_GAPS)
+    overall_ref_end_pos = translate_to_overall_pos(ref_peptide.end, SEQ_ONE_GAPS)
+
     # gather all possible comparisons for testing string
     while curr_pos <= aligned_test_end:
         if curr_pos in dictionary:
             test_peptide = dictionary[curr_pos]
-            if ((test_peptide.start <= aligned_test_start <= test_peptide.end) or
-                (test_peptide.start <= aligned_test_end <= test_peptide.end)) or \
-                    ((aligned_test_start <= test_peptide.start <= aligned_test_end) or
-                     (aligned_test_start <= test_peptide.end <= aligned_test_end)):
+            overall_test_start_pos = translate_to_overall_pos(test_peptide.start, SEQ_TWO_GAPS)
+            overall_test_end_pos = translate_to_overall_pos(test_peptide.end, SEQ_TWO_GAPS)
+            if ((overall_test_start_pos <= overall_ref_start_pos <= overall_test_end_pos) or
+                (overall_test_start_pos <= overall_ref_end_pos <= overall_test_end_pos)) or \
+                    ((overall_ref_start_pos <= overall_test_start_pos <= overall_ref_end_pos) or
+                     (overall_ref_start_pos <= overall_test_end_pos <= overall_ref_end_pos)):
                 comparison = compare_to_test_string(ref_peptide, test_peptide)
                 if comparison[0] == "matched":
                     comp_results["matched"].append(test_peptide)
@@ -1160,14 +1165,19 @@ def generate_main_comparisons(dictionary, test_peptide):
 
     curr_pos = max(1, aligned_test_start-MAIN_PEPTIDE_MAX_LENGTH)
 
+    overall_test_start_pos = translate_to_overall_pos(test_peptide.start, test_gaps)
+    overall_test_end_pos = translate_to_overall_pos(test_peptide.end, test_gaps)
+
     # gather all possible comparisons for testing string
     while curr_pos <= aligned_test_end:
         if curr_pos in dictionary:
             for main_peptide in dictionary[curr_pos]:
-                if ((main_peptide.start <= aligned_test_start <= main_peptide.end) or
-                    (main_peptide.start <= aligned_test_end <= main_peptide.end)) or \
-                        ((aligned_test_start <= main_peptide.start <= aligned_test_end) or
-                         (aligned_test_start <= main_peptide.end <= aligned_test_end)):
+                overall_main_start_pos = translate_to_overall_pos(main_peptide.start, main_gaps)
+                overall_main_end_pos = translate_to_overall_pos(main_peptide.end, main_gaps)
+                if ((overall_main_start_pos <= overall_test_start_pos <= overall_main_end_pos) or
+                    (overall_main_start_pos <= overall_test_end_pos <= overall_main_end_pos)) or \
+                        ((overall_test_start_pos <= overall_main_start_pos <= overall_test_end_pos) or
+                         (overall_test_start_pos <= overall_main_end_pos <= overall_test_end_pos)):
                     comparison = \
                         compare_to_main_string(test_peptide, main_peptide, test_gaps, main_gaps)
                     if comparison[0] == "matched":

@@ -82,7 +82,7 @@ Expects a numeric value indicating the minimum length of amino acids that should
 The IEDB-AR TepiTool sets the epitope length as part of its own parameters.  
 The B cell linear epitope prediction tool does not allow users to set prediction length, in which case the CAVES threshold may be applicable.
 
-***Default threshold is one amino acid (i.e. includes all epitopes).***
+***Default threshold is three amino acids.***
 
 ## Level selection
 Choice of running only L1 or L2 rather than the full CAVES comparison.
@@ -98,7 +98,7 @@ Choice of running only L1 or L2 rather than the full CAVES comparison.
 ## Results file
 Option to name the CAVES results file and choose the directory in which to save it. 
 
-***If left blank, a default name will be assigned and the file will be written in the same directory as the CAVES executable (dist).***
+***If left blank, a default name will be assigned and the file will be written in the same directory as the CAVES executable.***
 
 # CAVES output
 Results are written as a multi-sheet **.xlsx** file, labelled with the following short-hand naming convention:

@@ -8,7 +8,7 @@ In both levels, epitopes are sorted into categories of **exact matches**, **part
 
 # Resources
 * **Website**: https://github.com/connor-lowey/CAVES
-* **Publication**: Publication pending
+* **Publication**: https://www.mdpi.com/1999-4915/14/6/1152
 * **Sample dataset**: https://github.com/connor-lowey/CAVES/tree/main/sample_dataset
 
 # Installation
@@ -112,7 +112,7 @@ Results are written as a multi-sheet **.xlsx** file, labelled with the following
 L2 names will combine the L1 category used for comparison against the database epitopes, along with the L2 category produced as a result.
 * Ex. **L1E_L2E** will contain epitopes that found an exact match between sequence A and B in L1, and then found an exact match with a database epitope in L2
 
-For details on matching criteria, please refer to our publication and the associated supplementary materials: Publication pending
+For details on matching criteria, please refer to our publication and the associated supplementary materials: https://www.mdpi.com/1999-4915/14/6/1152
 
 # Legal
 Copyright 2021 Connor Lowey   

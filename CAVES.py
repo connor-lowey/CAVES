@@ -27,10 +27,10 @@ from os import path
 import sys
 import bisect
 
-if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-    print('running in a PyInstaller bundle')
-else:
-    print('running in a normal Python process')
+# if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+#     print('running in a PyInstaller bundle')
+# else:
+#     print('running in a normal Python process')
 
 
 # ----------------------------------------------- GLOBAL VARIABLES
@@ -1316,6 +1316,17 @@ def finalize_L2Only_results(result_file):
     result_file.save()
 
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = path.abspath("./src")
+
+    return path.join(base_path, relative_path)
+
+
 # ----------------------------------------------- MAIN
 
 
@@ -1324,6 +1335,12 @@ if __name__ == '__main__':
     window = tk.Tk()
     font = Font(family="Calibri", size=10)
     window.option_add("*Font", font)
+
+    try:
+        icon = PhotoImage(file=resource_path("caves_icon.png"))
+        window.iconphoto(False, icon)
+    except:
+        print("Icon failed to load")
 
     window.title("CAVES 1.0")
     app = MainApplication(window)

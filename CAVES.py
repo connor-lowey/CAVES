@@ -114,7 +114,6 @@ class App(customtkinter.CTk):
                                               text_font=("Roboto Medium", -16))  # font name and size in px
         self.label_2.grid(row=1, column=0, pady=10, padx=10)
 
-        self.radio_lvl_one_only = Radiobutton(self.frame_radio_buttons, text="Level 1 only",
         ##############################################################################################
 
     def start_clicked(self):

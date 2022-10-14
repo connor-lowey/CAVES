@@ -14,10 +14,12 @@ specific language governing permissions and limitations under the License.
 """
 
 import pandas as pd
+from datetime import datetime
+
 import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
-from datetime import datetime
+import customtkinter
 
 from tkinter.messagebox import showinfo
 from tkinter.messagebox import showwarning
@@ -27,10 +29,10 @@ from os import path
 import sys
 import bisect
 
-if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-    print('running in a PyInstaller bundle')
-else:
-    print('running in a normal Python process')
+# if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+#     print('running in a PyInstaller bundle')
+# else:
+#     print('running in a normal Python process')
 
 
 # ----------------------------------------------- GLOBAL VARIABLES
@@ -64,132 +66,54 @@ MAIN_PEPTIDE_MAX_LENGTH = 50
 # ----------------------------------------------- CLASSES
 
 
-class MainApplication:
+class App(customtkinter.CTk):
 
-    def __init__(self, master):
-        self.master = master
-        self.canvas = tk.Canvas(master, width=550, height=690)  # width=550, height=690
-        # to make a frame
-        self.frame = tk.Frame(master, bg='white')
+    WIDTH = 780
+    HEIGHT = 520
 
-        ############################################################################################
-        # Frame Input
-        # this frame is placed in the original frame
+    def __init__(self):
+        super().__init__()
+        try:
+            icon = PhotoImage(file=resource_path("caves_icon.png"))
+            self.iconphoto(False, icon)
+        except:
+            print("Icon failed to load")
 
-        title_font = Font(family="Calibri", size=12, weight="bold")
+        self.title("CAVES 2.0")
+        self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)  # call .on_closing() when app gets closed
 
-        self.frame_input = tk.Frame(self.frame, bd='10', padx=3, pady=3)
-        self.label_input_files = tk.Label(self.frame_input, text='Input File Paths', bd='3', fg='blue', font=title_font)
+        # ============ create two frames ============
 
-        self.label_epitope_predictions = tk.Label(self.frame_input, text='Epitope Predictions', bd='3', fg='blue')
-        self.label_ref = tk.Label(self.frame_input, text='Sequence A', bd='3')
-        self.label_test = tk.Label(self.frame_input, text='Sequence B', bd='3')
+        # configure grid layout (2x1)
+        self.grid_columnconfigure(0, weight=3)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
-        self.label_database_searches = tk.Label(self.frame_input, text='Database Searches', bd='3', fg='blue')
-        self.label_main_one = tk.Label(self.frame_input, text='Sequence A', bd='3')
-        self.label_main_two = tk.Label(self.frame_input, text='Sequence B', bd='3')
+        self.frame_left = customtkinter.CTkFrame(master=self)
+        self.frame_left.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
 
-        self.entry_ref = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.entry_test = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.entry_main_one = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.entry_main_two = tk.Entry(self.frame_input, bd='3', justify="center")
+        self.frame_right = customtkinter.CTkFrame(master=self)
+        self.frame_right.grid(row=0, column=1, sticky="nswe", padx=10, pady=10)
 
-        self.button_ref = tk.Button(self.frame_input, text='Browse', command=self.browse_ref)
-        self.button_test = tk.Button(self.frame_input, text='Browse', command=self.browse_test)
-        self.button_main_one = tk.Button(self.frame_input, text='Browse', command=self.browse_main_one)
-        self.button_main_two = tk.Button(self.frame_input, text='Browse', command=self.browse_main_two)
+        # configure grid layout (1x11)
+        self.frame_left.grid_rowconfigure(0, minsize=10)  # empty row with minsize as spacing
+        # self.frame_left.grid_rowconfigure(5, weight=1)  # empty row as spacing
+        # self.frame_left.grid_rowconfigure(8, minsize=20)  # empty row with minsize as spacing
+        # self.frame_left.grid_rowconfigure(11, minsize=10)  # empty row with minsize as spacing
 
-        self.label_indels_title = tk.Label(self.frame_input, text='CAVES Indel Search', bd='3', fg='blue')
+        self.label_1 = customtkinter.CTkLabel(master=self.frame_left,
+                                              text="Input File Paths",
+                                              text_font=("Roboto Medium", -16))  # font name and size in px
+        self.label_1.grid(row=1, column=0, pady=10, padx=10)
 
-        self.label_indels_alignment = tk.Label(self.frame_input, text='Alignment', bd='3')
-        self.entry_indels_alignment = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.button_indels_alignment = tk.Button(self.frame_input, text='Browse', command=self.browse_alignment)
+        self.frame_right.grid_rowconfigure(0, minsize=10)
+        self.frame_right.grid_columnconfigure(0, weight=1)
+        self.label_2 = customtkinter.CTkLabel(master=self.frame_right,
+                                              text="Additional Parameters",
+                                              text_font=("Roboto Medium", -16))  # font name and size in px
+        self.label_2.grid(row=1, column=0, pady=10, padx=10)
 
-        self.label_threshold_title = tk.Label(self.frame_input, text='Minimum Peptide Length', bd='3', fg='blue',
-                                              font=title_font)
-        self.entry_threshold = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.label_threshold_helper = tk.Label(self.frame_input,
-                                               text='Default minimum is 3 amino acids',
-                                               bd='3', fg='red')
-
-        self.label_radio_title = tk.Label(self.frame_input, text='Level Selection', bd='3', fg='blue',
-                                          font=title_font)
-
-        self.frame_radio_buttons = tk.Frame(self.frame_input, bd='0', padx=3, pady=3)
-        self.level_selection = IntVar()
-        self.level_selection.set(1)
-        self.radio_both_lvls = Radiobutton(self.frame_radio_buttons, text="Level 1 and 2",
-                                           command=self.config_L1L2_entries,
-                                           variable=self.level_selection, value=1).grid(row=0, column=1, padx=50)
-        self.radio_lvl_one_only = Radiobutton(self.frame_radio_buttons, text="Level 1 only",
-                                              command=self.config_L1_only_entries,
-                                              variable=self.level_selection, value=2).grid(row=0, column=2)
-        self.radio_lvl_two_only = Radiobutton(self.frame_radio_buttons, text="Level 2 only",
-                                              command=self.config_L2_only_entries,
-                                              variable=self.level_selection, value=3).grid(row=0, column=3, padx=50)
-
-        self.label_result_file_title = tk.Label(self.frame_input, text='Results File', bd='3', fg='blue',
-                                                font=title_font)
-        self.entry_result_file = tk.Entry(self.frame_input, bd='3', justify="center")
-        self.button_result_path = tk.Button(self.frame_input, text='Browse', command=self.browse_result_path)
-
-        # place used to place the widgets in the frame
-        self.label_input_files.place(relx=-0.005, rely=-0.01, relheight=0.05)
-
-        self.label_epitope_predictions.place(relx=0.025, rely=0.06, relheight=0.035)
-        self.label_ref.place(relx=0.05, rely=0.12, relheight=0.035)
-        self.entry_ref.place(relx=0.20, rely=0.12, relwidth=0.55, relheight=0.035)
-        self.button_ref.place(relx=0.80, rely=0.12, relheight=0.030)
-
-        self.label_test.place(relx=0.05, rely=0.18, relheight=0.035)
-        self.entry_test.place(relx=0.20, rely=0.18, relwidth=0.55, relheight=0.035)
-        self.button_test.place(relx=0.80, rely=0.18, relheight=0.030)
-
-        self.label_database_searches.place(relx=0.025, rely=0.26, relheight=0.035)
-        self.label_main_one.place(relx=0.05, rely=0.32, relheight=0.035)
-        self.entry_main_one.place(relx=0.20, rely=0.32, relwidth=0.55, relheight=0.035)
-        self.button_main_one.place(relx=0.80, rely=0.32, relheight=0.030)
-
-        self.label_main_two.place(relx=0.05, rely=0.38, relheight=0.035)
-        self.entry_main_two.place(relx=0.20, rely=0.38, relwidth=0.55, relheight=0.035)
-        self.button_main_two.place(relx=0.80, rely=0.38, relheight=0.030)
-
-        self.label_indels_title.place(relx=0.025, rely=0.46, relheight=0.035)
-        self.label_indels_alignment.place(relx=0.06, rely=0.52, relheight=0.035)
-        self.entry_indels_alignment.place(relx=0.20, rely=0.52, relwidth=0.55, relheight=0.035)
-        self.button_indels_alignment.place(relx=0.80, rely=0.52, relheight=0.030)
-
-        self.label_threshold_title.place(relx=-0.005, rely=0.60, relheight=0.05)
-        self.entry_threshold.place(relx=0.10, rely=0.69, relwidth=0.05, relheight=0.030)
-        self.label_threshold_helper.place(relx=0.175, rely=0.69, relheight=0.030)
-
-        self.label_radio_title.place(relx=-0.005, rely=0.76, relheight=0.05)
-        #  Radio buttons are placed in their own frame (self.frame_radio_buttons)
-
-        self.label_result_file_title.place(relx=-0.005, rely=0.90, relheight=0.035)
-        self.entry_result_file.place(relx=0.20, rely=0.955, relwidth=0.55, relheight=0.035)
-        self.button_result_path.place(relx=0.80, rely=0.955, relheight=0.030)
-
-        ############################################################################################
-        # placing the buttons below
-        submit_font = Font(family="Calibri", size=12)
-
-        self.frame_button = tk.Frame(self.frame, bd='3', padx=3, pady=3)
-        self.button_start = tk.Button(self.frame_button, text='Compare', font=submit_font, command=self.start_clicked)
-        self.button_cancel = tk.Button(self.frame_button, text='Cancel', font=submit_font, command=self.clear_fields)
-
-        self.button_cancel.place(relx=0.6, rely=0.22, relheight=0.6, relwidth=0.18)
-        self.button_start.place(relx=0.8, rely=0.22, relheight=0.6, relwidth=0.18)
-
-        ###############################################################################################
-        # all the frames are placed in their respective positions
-
-        self.frame_input.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.906)
-        self.frame_radio_buttons.place(relx=0.005, rely=0.8275, relwidth=1, relheight=1)
-        self.frame_button.place(relx=0.005, rely=0.915, relwidth=0.99, relheight=0.08)
-
-        self.frame.place(relx=0.02, rely=0.02, relwidth=0.96, relheight=0.96)
-        self.canvas.pack()
         ##############################################################################################
 
     def start_clicked(self):
@@ -338,6 +262,9 @@ class MainApplication:
         self.entry_test.config(state='disabled', disabledbackground="#c4c4c4")
         self.entry_main_one.config(state='normal')
         self.entry_main_two.config(state='disabled', disabledbackground="#c4c4c4")
+
+    def on_closing(self, event=0):
+        self.destroy()
 
 
 class ResultSheetObject:
@@ -1316,15 +1243,23 @@ def finalize_L2Only_results(result_file):
     result_file.save()
 
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = path.abspath("./src")
+
+    return path.join(base_path, relative_path)
+
+
 # ----------------------------------------------- MAIN
 
 
 if __name__ == '__main__':
-
-    window = tk.Tk()
-    font = Font(family="Calibri", size=10)
-    window.option_add("*Font", font)
-
-    window.title("CAVES 1.0")
-    app = MainApplication(window)
-    window.mainloop()
+    # window = customtkinter.CTk()
+    # font = Font(family="Calibri", size=10)
+    # window.option_add("*Font", font)
+    app = App()
+    app.mainloop()
